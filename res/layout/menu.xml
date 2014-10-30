@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="230dp"
+              android:layout_height="wrap_content"
+              android:background="#ff7a7a7a"
+              android:addStatesFromChildren="true" android:alpha="0.8">
+    <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="230dp"
+            android:layout_height="fill_parent">
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:onClick="onSetting">
+            <TextView android:layout_width="fill_parent" android:layout_height="40dp" android:text="设 置" android:textSize="26sp" android:gravity="center"
+                      android:textIsSelectable="false"/>
+        </LinearLayout>
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="2dp" android:background="#ffa0a5a0">
+        </LinearLayout>
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:onClick="onAbout">
+            <TextView android:layout_width="fill_parent" android:layout_height="40dp" android:text="关 于"
+                      android:textSize="26sp" android:gravity="center"
+                      android:id="@+id/textView"
+                      android:textIsSelectable="false"/>
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  ~ Copyright (c) 2014. Powered by YangTao.
+  -->
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:orientation="vertical"
+              android:layout_width="350dp"
+              android:layout_height="wrap_content"
+              android:alpha="1">
+
+    <RelativeLayout
+            android:id="@+id/item"
+            android:layout_width="fill_parent"
+            android:layout_height="60dp"
+            android:focusable="false" >
+        <CheckBox
+                android:layout_width="35dp"
+                android:layout_height="fill_parent"
+                android:id="@+id/checkbox_check"
+                android:gravity="center"
+                style="@style/MyCheckBox"
+                android:onClick="onItemClick" android:shadowColor="#ff222125" android:selectAllOnFocus="false"/>
+        <ImageView
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:id="@+id/imageView"
+                android:layout_margin="5dp"
+                android:layout_toEndOf="@id/checkbox_check"
+                android:layout_toRightOf="@id/checkbox_check"/>
+        <TextView
+                android:id="@+id/textview_uid"
+                android:gravity="center"
+                android:layout_width="70dp" android:layout_height="fill_parent"
+                android:text="UID"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true" android:textColor="#ff333337"/>
+        <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="fill_parent"
+                android:layout_height="fill_parent"
+                android:layout_toEndOf="@id/imageView"
+                android:layout_toRightOf="@id/imageView"
+                android:layout_toStartOf="@id/textview_uid"
+                android:layout_toLeftOf="@id/textview_uid">
+            <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="35dp"
+                    android:text="腾讯QQ"
+                    android:id="@+id/textView_appname"
+                    android:textSize="15sp"
+                    android:gravity="center_vertical"
+                    android:textColor="@android:color/background_dark"
+                    android:singleLine="true"
+                    android:button="@null" />
+            <TextView
+                    android:layout_width="fill_parent"
+                    android:layout_height="25dp"
+                    android:text="com.tencent"
+                    android:id="@+id/textView_packagename" android:textSize="10sp"
+                    android:textColor="@android:color/background_dark" android:layout_alignParentRight="true"
+                    android:gravity="center_vertical"
+                    />
+        </LinearLayout>
+
+    </RelativeLayout>
+</LinearLayout>
