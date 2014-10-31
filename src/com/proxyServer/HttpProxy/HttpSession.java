@@ -28,11 +28,10 @@ public class HttpSession extends Thread
 		}
 		catch(Exception e)
 		{
-			
 		}
 		finally
 		{
-			if(conn != null) conn.allClose();
+			conn.closeC2S();
 		}
 	}
 }

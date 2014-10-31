@@ -85,7 +85,7 @@ public class Client2Proxy
 					}
 					writeBody();
 					oStream.flush();
-					if(conn.isC2PCanClose())
+					if(conn.isC2SCanClose())
 						break;
 				}
 			}
@@ -93,19 +93,6 @@ public class Client2Proxy
 		}
 		catch(Exception e)
 		{
-			if(S2P !=null)
-			{
-				try
-				{
-					S2P.join();
-				} catch (InterruptedException e1)
-				{
-				}
-			}
-		}
-		finally
-		{
-			conn.closeC2P();
 		}
 	}
 
@@ -402,10 +389,8 @@ public class Client2Proxy
 			//通过对比新旧主机名与IP 判断是否已经建立了连接
 			if((!OldHost.equals(hfl.Host)) || OldPort != hfl.Port )
 			{
-				conn.closeServer();
 				if(S2P !=null)
 				{
-					conn.closeC2P();
 					S2P.interrupt();
 				}
 

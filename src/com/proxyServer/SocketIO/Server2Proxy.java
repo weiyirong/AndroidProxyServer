@@ -41,7 +41,7 @@ public class Server2Proxy extends Thread
 				{
 					break;
 				}
-				if(conn.isS2PCanClose())
+				if(conn.isS2CCanClose())
 				{
 					break;
 				}
@@ -51,7 +51,7 @@ public class Server2Proxy extends Thread
 		{}
 		finally
 		{
-			conn.closeS2P();
+			conn.closeS2C();
 		}
 
 	}

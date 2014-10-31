@@ -1,5 +1,8 @@
 package com.proxyServer.HttpProxy;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.beans.PropertyChangeSupport;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
@@ -8,6 +11,7 @@ import java.net.Socket;
 
 public class HttpConnection
 {
+	private int count = 0;
 	private Socket clientSocket;
 	private Socket serverSocket;
 
@@ -17,6 +21,9 @@ public class HttpConnection
 	private BufferedOutputStream serverOut;
 
 
+
+
+
 	public void setNewClient(Socket client) throws IOException
 	{
 		closeClient();
@@ -24,6 +31,7 @@ public class HttpConnection
 		this.clientIn = new BufferedInputStream(client.getInputStream());
 		this.clientOut = new BufferedOutputStream(client.getOutputStream());
 		clientSocket.setSoTimeout(60000);
+		count+=2;
 	}
 	public void setNewServer(Socket server) throws IOException
 	{
@@ -32,6 +40,7 @@ public class HttpConnection
 		this.serverIn = new BufferedInputStream(server.getInputStream());
 		this.serverOut = new BufferedOutputStream(server.getOutputStream());
 		serverSocket.setSoTimeout(60000);
+		count+=2;
 	}
 
 	public BufferedInputStream getClientIN()
@@ -62,38 +71,57 @@ public class HttpConnection
 
 	public void closeClient()
 	{
-		try
-		{
+
 			if(clientSocket != null && !clientSocket.isClosed())
 			{
-				if(!clientSocket.isInputShutdown())
-					clientIn.close();
-				if(!clientSocket.isOutputShutdown())
-					clientOut.close();
-				clientSocket.close();
+				closeClientIn();
+				closeClientOut();
+				try
+				{
+					clientSocket.close();
+				} catch (IOException e){}
 			}
-		}
-		catch(IOException e)
-		{}
+
 	}
 
 	public void closeServer()
 	{
-		try
-		{
 			if(serverSocket != null && !serverSocket.isClosed())
 			{
-				if(!serverSocket.isOutputShutdown())
-					serverOut.close();
-				if(!serverSocket.isInputShutdown())
-					serverIn.close();
-				serverSocket.close();
+				closeServerIn();
+				closeServerOut();
+				try
+				{
+					serverSocket.close();
+				} catch (IOException e)
+				{
+				}
 			}
-		}
-		catch(IOException e)
-		{}
+
 	}
-	
+
+	public void reduceCount()
+	{
+		if((--count)<1)
+		{
+			try
+			{
+				if(serverSocket!=null)serverSocket.close();
+			} catch (IOException e)
+			{
+
+			}
+			//必须分开写 防止第一句话抛异常 导致第二句也不执行
+			try
+			{
+				if(clientSocket!=null)clientSocket.close();
+			} catch (IOException e)
+			{
+
+			}
+
+		}
+	}
 	public boolean isConnectToServer()
 	{
 		return serverSocket!=null && !serverSocket.isClosed();
@@ -103,7 +131,7 @@ public class HttpConnection
 	{
 		return clientSocket!=null && !clientSocket.isClosed();
 	}
-	public boolean isS2PCanClose()
+	public boolean isS2CCanClose()
 	{
 		if(!(isConnectToServer() && isClientConnection()))
 			return true;
@@ -111,7 +139,7 @@ public class HttpConnection
 			return true;
 		return false;
 	}
-	public boolean isC2PCanClose()
+	public boolean isC2SCanClose()
 	{
 		if(!(isConnectToServer() && isClientConnection()))
 			return true;
@@ -120,29 +148,69 @@ public class HttpConnection
 			return true;
 		return false;
 	}
-	public void closeS2P()
+
+	public void closeS2C()
 	{
-		try
-		{
-			if(serverIn!=null)
-				serverIn.close();
-			if(clientOut!=null)
-				clientOut.close();
-		} catch (IOException e)
-		{}
+		closeServerIn();
+		closeClientOut();
 	}
 
-	public void closeC2P()
+	public void closeC2S()
+	{
+		closeClientIn();
+		closeServerOut();
+	}
+
+	public void closeClientIn()
 	{
 		try
 		{
-			if(clientIn!=null)
+			if(clientIn!=null && !clientSocket.isInputShutdown())
+			{
 				clientIn.close();
-			if(serverOut!=null)
-				serverOut.close();
-		} catch (IOException e)
-		{}
+				reduceCount();
+			}
+		}catch(Exception e){}
 	}
+	public void closeClientOut()
+	{
+		try
+		{
+			if (clientOut != null && !clientSocket.isOutputShutdown())
+			{
+				clientOut.close();
+				reduceCount();
+			}
+		}catch (Exception e){}
+	}
+	public void closeServerIn()
+	{
+		try
+		{
+			if(serverIn!=null && !serverSocket.isInputShutdown())
+			{
+				serverIn.close();
+				reduceCount();
+			}
+		}
+		catch (Exception e){}
+
+	}
+	public void closeServerOut()
+	{
+		try
+		{
+			if(serverOut!=null && !serverSocket.isOutputShutdown())
+			{
+				serverOut.close();
+				reduceCount();
+			}
+		}catch(Exception e){}
+
+	}
+
 
 }
+
+
 
