@@ -295,25 +295,31 @@ class AppAdapter extends BaseAdapter
 		{
 			LayoutInflater layoutInflater = LayoutInflater.from(context);
 			convertView = layoutInflater.inflate(R.layout.apps_list_item,null);
+			ViewHolder v = new ViewHolder();
+			v.setCheckBox(((CheckBox)convertView.findViewById(R.id.checkbox_check)));
+			v.setImageView((ImageView)convertView.findViewById(R.id.imageView));
+			v.setName((TextView)convertView.findViewById(R.id.textView_appname));
+			v.setPackageView((TextView)convertView.findViewById(R.id.textView_packagename));
+			v.setUid((TextView)convertView.findViewById(R.id.textview_uid));
+			convertView.setTag(v);
 		}
-
-		CheckBox checkBox = ((CheckBox)convertView.findViewById(R.id.checkbox_check));
 		Map<String, Object> m =applist.get(position);
-		((ImageView)convertView.findViewById(R.id.imageView)).setImageDrawable((Drawable)m.get("img"));
-		((TextView)convertView.findViewById(R.id.textView_appname)).setText((CharSequence)m.get("name"));
-		((TextView)convertView.findViewById(R.id.textView_packagename)).setText((CharSequence)m.get("package"));
-		((TextView)convertView.findViewById(R.id.textview_uid)).setText(""+(int)m.get("uid"));
+		ViewHolder v = (ViewHolder)convertView.getTag();
+		v.getImageView().setImageDrawable((Drawable)m.get("img"));
+		v.getName().setText((CharSequence)m.get("name"));
+		v.getPackageView().setText((CharSequence)m.get("package"));
+		v.getUid().setText(""+(int)m.get("uid"));
 
-		checkBox.setChecked(checkedUid.contains((Integer)m.get("uid")));
+		v.getCheckBox().setChecked(checkedUid.contains((Integer)m.get("uid")));
 		if(anotherSide.contains(m.get("uid")))
 		{
-			checkBox.setChecked(true);
-			checkBox.setEnabled(false);
+			v.getCheckBox().setChecked(true);
+			v.getCheckBox().setEnabled(false);
 			convertView.setBackgroundColor(Color.argb(200,222,222,222));
 		}
 		else
 		{
-			checkBox.setEnabled(true);
+			v.getCheckBox().setEnabled(true);
 			convertView.setBackgroundColor(Color.argb(0,0,0,0));
 		}
 		convertView.findViewById(R.id.checkbox_check).setTag(m.get("uid"));
@@ -325,7 +331,64 @@ class AppAdapter extends BaseAdapter
 	{
 		return applist.isEmpty();
 	}
+}
 
+class ViewHolder
+{
+	CheckBox checkBox;
+	ImageView imageView;
+	TextView name;
+	TextView packageView;
+	TextView uid;
 
+	public CheckBox getCheckBox()
+	{
+		return checkBox;
+	}
+
+	public void setCheckBox(CheckBox checkBox)
+	{
+		this.checkBox = checkBox;
+	}
+
+	public ImageView getImageView()
+	{
+		return imageView;
+	}
+
+	public void setImageView(ImageView imageView)
+	{
+		this.imageView = imageView;
+	}
+
+	public TextView getName()
+	{
+		return name;
+	}
+
+	public void setName(TextView name)
+	{
+		this.name = name;
+	}
+
+	public TextView getPackageView()
+	{
+		return packageView;
+	}
+
+	public void setPackageView(TextView packageView)
+	{
+		this.packageView = packageView;
+	}
+
+	public TextView getUid()
+	{
+		return uid;
+	}
+
+	public void setUid(TextView uid)
+	{
+		this.uid = uid;
+	}
 }
 
