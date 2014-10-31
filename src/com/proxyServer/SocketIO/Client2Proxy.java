@@ -238,16 +238,14 @@ public class Client2Proxy
 				bf.setLength(0);
 				continue;
 			}
-			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
+			if(!Config.isDisguiseMMS &&
+					(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept)||
+					ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type)))
 			{
 				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
-			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
-			{
-				bf.append(line.buffer(), 0, line.length());
-				continue;
-			}
+
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Length))
 			{
 				content_length= Integer.parseInt(new String(line.buffer(),16,line.length()-18));
@@ -299,12 +297,9 @@ public class Client2Proxy
 				oStream.write(ByteArrays.CLCR);
 				continue;
 			}
-			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
-			{
-				oStream.write(line.buffer(),0,line.length());
-				continue;
-			}
-			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
+			if(!Config.isDisguiseMMS && (ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept)
+					||
+					ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type)))
 			{
 				oStream.write(line.buffer(),0,line.length());
 				continue;
