@@ -73,6 +73,7 @@ public class Client2Proxy
 //						writeFirstLineWithBuffer(); //其实执行出错，因为还没有HOST，不能写入第一行数据，本行将延迟到发现Host时执行
 						//又因发现HOST时可以不再使用缓冲区，所以其实执行的是writeFirstLineWithoutBuffer，故本函数失去意义，特删除并
 						//做此注释
+						//对于writefirstline可以放到发现真正的Host的时候延迟执行
 						analyseAndWriteHeadWhenHostNotFound();
 					}
 
@@ -193,12 +194,6 @@ public class Client2Proxy
 		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
 		{
 
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Length))
-			{
-				content_length= Integer.parseInt(new String(line.buffer(),0,line.length()).substring(15).trim());
-				bf.append(line.buffer(), 0, line.length());
-				continue;
-			}
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 //				if(noHost) 一定无Host字段
@@ -217,6 +212,7 @@ public class Client2Proxy
 						hfl.Host = HP.trim();
 						hfl.Port = 80;
 					}
+					hfl.setHP();//重新设置HP
 					ConnectToServer();
 					if(conn.isConnectToServer())
 						throw  new ServerNotConnectedExecption();
@@ -241,54 +237,32 @@ public class Client2Proxy
 				bf.setLength(0);
 				continue;
 			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
+			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
 			{
-				if(Config.isDisguiseMMS)
-				{
-					continue;
-				}
-				else
-				{
-					bf.append(line.buffer(), 0, line.length());
-				}
+				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
+			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
 			{
-				if(Config.isDisguiseMMS)
-				{
-					continue;
-				}
-				else
-				{
-					bf.append(line.buffer(), 0, line.length());
-				}
+				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Connection))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Length))
 			{
-				if(Config.isReplaceConnection)
-				{
-					writToBuffer(ByteArrays.Connection);
-					writToBuffer(Config.replaceConnection);
-					writToBuffer(ByteArrays.CLCR);
-				}
-				else
-				{
-					bf.append(line.buffer(), 0, line.length());
-				}
+				content_length= Integer.parseInt(new String(line.buffer(),0,line.length()).substring(15).trim());
+				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
+			if(Config.isReplaceConnection && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Connection))
 			{
-				if(Config.isReplaceXOnlineHost)
-				{
-					continue;
-				}
-				else
-				{
-					bf.append(line.buffer(), 0, line.length());
-				}
+				writToBuffer(ByteArrays.Connection);
+				writToBuffer(Config.replaceConnection);
+				writToBuffer(ByteArrays.CLCR);
+				continue;
+			}
+			if(!Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
+			{
+				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
 			bf.append(line.buffer(), 0, line.length());
@@ -315,76 +289,40 @@ public class Client2Proxy
 		}
 		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
 		{
+
+			if(Config.isReplaceHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
+			{
+				byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
+				oStream.write(b);
+				oStream.write(ByteArrays.CLCR);
+				continue;
+			}
+			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
+			{
+				oStream.write(line.buffer(),0,line.length());
+				continue;
+			}
+			if(!Config.isDisguiseMMS && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
+			{
+				oStream.write(line.buffer(),0,line.length());
+				continue;
+			}
 			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Content_Length))
 			{
 				content_length= Integer.parseInt(new String(line.buffer(),0,line.length()).trim());
 				oStream.write(line.buffer(),0,line.length());
-//				Log.d("ContentLength",String.valueOf(content_length));
 				continue;
 			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
+			if(Config.isReplaceConnection && ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Connection))
 			{
-				if(Config.isReplaceHost)
-				{
-					byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
-					oStream.write(b);
-					oStream.write(ByteArrays.CLCR);
-				}
-				else
-				{
-					oStream.write(line.buffer(),0,line.length());
-				}
-
+				oStream.write(ByteArrays.Connection);
+				oStream.write(Config.replaceConnection);
+				oStream.write(ByteArrays.CLCR);
 				continue;
 			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
+			if(!Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
 			{
-				if(Config.isDisguiseMMS)
-				{
-					continue;
-				}
-				else
-				{
-					oStream.write(line.buffer(),0,line.length());
-				}
-				continue;
-			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
-			{
-				if(Config.isDisguiseMMS)
-				{
-					continue;
-				}
-				else
-				{
-					oStream.write(line.buffer(),0,line.length());
-				}
-				continue;
-			}
-			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Connection))
-			{
-				if(Config.isReplaceConnection)
-				{
-					oStream.write(ByteArrays.Connection);
-					oStream.write(Config.replaceConnection);
-					oStream.write(ByteArrays.CLCR);
-				}
-				else
-				{
-					oStream.write(line.buffer(),0,line.length());
-				}
-				continue;
-			}
-			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
-			{
-				if(Config.isReplaceXOnlineHost)
-				{
-					continue;
-				}
-				else
-				{
-					oStream.write(line.buffer(),0,line.length());
-				}
+				oStream.write(line.buffer(),0,line.length());
 				continue;
 			}
 			oStream.write(line.buffer(),0,line.length());

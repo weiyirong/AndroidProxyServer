@@ -1,6 +1,7 @@
 package com.proxyServer.SocketIO;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Locale;
 
 import com.proxyServer.Exception.FirstLineFormatErrorExpection;
@@ -50,10 +51,13 @@ public class HttpFirstLine
 			parstHost(strArray[1].substring(0, index));
 			Uri= strArray[1].substring(index);
 		}
-		HP = (Port==80?Host:Host+":"+Port).getBytes("iso8859-1");
+		setHP();
 	}
 
-
+	public void setHP() throws UnsupportedEncodingException
+	{
+		HP = (Port==80?Host:Host+":"+Port).getBytes("iso8859-1");
+	}
 	public void parstHost(String H)
 	{
 		int index = H.indexOf(':');

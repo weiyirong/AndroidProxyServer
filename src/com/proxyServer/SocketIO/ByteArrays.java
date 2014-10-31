@@ -16,11 +16,10 @@ public class ByteArrays
 	final public static byte[] http_hou     = str2byte(" HTTP/1.1\r\nConnection: Keep-Alive\r\n\r\n");
 	final public static byte[] H            = str2byte("[H]");
 	final public static byte[] X            = str2byte("[X]");
-	final public static byte[] Content_Length = str2byte("Content-Length:");
-	final public static byte[] Host         =str2byte("Host:");
+	final public static byte[] Content_Length = str2byte("Content-Length");
+	final public static byte[] Host         =str2byte("Host");
 	final public static byte[] Accept       =str2byte("Accept:");
-	final public static byte[] Content_Type =str2byte("Content-Type:");
-	final public static byte[] Connnection  =str2byte("Connnection:");
+	final public static byte[] Content_Type =str2byte("Content-Type");
 	final public static byte[] X_Online_Host= str2byte("X-Online-Host");
 
 
