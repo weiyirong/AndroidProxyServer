@@ -206,13 +206,14 @@ public class Client2Proxy
 					{
 						hfl.Host = HP.substring(0,index);
 						hfl.Port = Integer.parseInt(HP.substring(index+1),HP.length()-2);
+						hfl.HP = HP.getBytes("iso8859-1");
 					}
 					else
 					{
 						hfl.Host = HP.trim();
 						hfl.Port = 80;
+						hfl.HP   = HP.getBytes("iso8859-1");
 					}
-					hfl.setHP();//重新设置HP
 					ConnectToServer();
 					if(conn.isConnectToServer())
 						throw  new ServerNotConnectedExecption();
@@ -249,7 +250,7 @@ public class Client2Proxy
 			}
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Length))
 			{
-				content_length= Integer.parseInt(new String(line.buffer(),0,line.length()).substring(15).trim());
+				content_length= Integer.parseInt(new String(line.buffer(),16,line.length()-18));
 				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
@@ -289,6 +290,7 @@ public class Client2Proxy
 		}
 		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
 		{
+//			String aaaa = new String(line.buffer(),0,line.length());
 
 			if(Config.isReplaceHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
@@ -309,7 +311,7 @@ public class Client2Proxy
 			}
 			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Content_Length))
 			{
-				content_length= Integer.parseInt(new String(line.buffer(),0,line.length()).trim());
+				content_length= Integer.parseInt(new String(line.buffer(),16,line.length()-18));
 				oStream.write(line.buffer(),0,line.length());
 				continue;
 			}

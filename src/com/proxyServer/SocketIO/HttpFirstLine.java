@@ -51,14 +51,10 @@ public class HttpFirstLine
 			parstHost(strArray[1].substring(0, index));
 			Uri= strArray[1].substring(index);
 		}
-		setHP();
 	}
 
-	public void setHP() throws UnsupportedEncodingException
-	{
-		HP = (Port==80?Host:Host+":"+Port).getBytes("iso8859-1");
-	}
-	public void parstHost(String H)
+
+	public void parstHost(String H) throws UnsupportedEncodingException
 	{
 		int index = H.indexOf(':');
 		if(index>0)
@@ -71,6 +67,7 @@ public class HttpFirstLine
 			Host = H;
 			Port = 80;
 		}
+		HP   = H.getBytes("iso8859-1");
 	}
 
 
