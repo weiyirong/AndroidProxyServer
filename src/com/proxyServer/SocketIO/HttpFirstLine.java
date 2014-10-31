@@ -13,6 +13,7 @@ public class HttpFirstLine
 	public String Host= "";
 	public String Uri= "";
 	public String Version= "HTTP/1.1";
+	public byte[] HP=null;
 	public int Port=80;
 
 
@@ -49,31 +50,9 @@ public class HttpFirstLine
 			parstHost(strArray[1].substring(0, index));
 			Uri= strArray[1].substring(index);
 		}
+		HP = (Port==80?Host:Host+":"+Port).getBytes("iso8859-1");
 	}
 
-	public String getVersion()
-	{
-		return Version;
-	}
-
-	public String getMethod()
-	{
-		return Method;
-	}
-
-	public String getUri()
-	{
-		return Uri;
-	}
-
-	public String getHost()
-	{
-		return Host;
-	}
-	public int getPort()
-	{
-		return Port;
-	}
 
 	public void parstHost(String H)
 	{

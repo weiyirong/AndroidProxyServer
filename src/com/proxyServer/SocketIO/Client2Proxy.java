@@ -37,9 +37,8 @@ public class Client2Proxy
 	private byte[] buffer = new byte[8192];//用于写入HTTP报头体的客户端读buffer
 
 	private ByteArrayBuffer bf = new ByteArrayBuffer(2048); //找不到Host时用的暂存缓冲区的方法
-
+	private ByteArrayBuffer lineBF = new ByteArrayBuffer(256); //仅用于getLine函数
 //	StringBuilder patternStringBuilder = new StringBuilder(); //此Builder仅用于模式匹配函数
-	StringBuilder lineBuilder = new StringBuilder(1024);//此Builder仅用于getLine函数
 	private BufferedInputStream iStream= null;
 	private BufferedOutputStream oStream= null;
 
@@ -117,13 +116,13 @@ public class Client2Proxy
 	 */
 	protected boolean analyseFirstLine() throws HttpMethodNotSupportExpection, IOException, FirstLineFormatErrorExpection
 	{
-		String firstLineString = getLine(iStream);
-		if(firstLineString.length()==0) throw new ClientReadFirstLineExpection(null);
+		ByteArrayBuffer b = getLine(iStream);
+		if(b.length()==0) throw new ClientReadFirstLineExpection(null);
 //		String method = firstLineString.substring(0, 7);
 		//判断方法是否被支持
 //		if(!isSupport(method)) throw new HttpMethodNotSupportExpection("ReadCount:"+(ReadTimes++));
 		//解析第一行数据
-		hfl =new  HttpFirstLine(firstLineString);
+		hfl =new  HttpFirstLine(new String(b.buffer(),0,b.length()));
 		//设置HttpConnection的Server连接
 		try
 		{
@@ -144,14 +143,11 @@ public class Client2Proxy
 		//是否在Http请求前插入数据
 		if(Config.isBeforeURL)
 		{
-//			StringBuilder tempBuilder = new StringBuilder(512);
-//			tempBuilder.append("GET http://").append(Config.beforeURL).append(" HTTP/1.1\r\nConnection: Keep-Alive\r\n\r\n");
 
 			oStream.write(ByteArrays.get_http);
 			oStream.write(Config.beforeURL);
 			oStream.write(ByteArrays.http_hou);
-			//( HTTP/1.1\r\nConnection: Keep-Alive\r\n\r\n)
-//			writToBuffer(tempBuilder.toString().getBytes("iso8859-1"));
+
 			oStream.write(ByteArrays.CLCR);
 		}
 		//真正的写入第一行数据
@@ -194,22 +190,22 @@ public class Client2Proxy
 			writToBuffer(patternMatching(Config.custom, hfl));
 			writToBuffer(ByteArrays.CLCR);
 		}
-		for(String line= getLine(iStream); line.length() > 2; line= getLine(iStream))
+		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
 		{
-			String littleLine;
-			littleLine = line.length()>14 ? line.substring(0, 14).toLowerCase(Locale.ENGLISH):line.toLowerCase(Locale.ENGLISH);
-			if(startsWith(littleLine, "content-length"))
+
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Length))
 			{
-				content_length= Integer.parseInt(line.substring(15).trim());
-				writToBuffer(line.getBytes("iso8859-1"));
+				content_length= Integer.parseInt(new String(line.buffer(),0,line.length()).substring(15).trim());
+				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
-			if(startsWith(littleLine, "host"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 //				if(noHost) 一定无Host字段
 				{
 					//尚未发现主机，现在刚发现，故要对远程主机进行连接，并且修改noHost
-					String HP = line.substring(line.indexOf(": ")+2);
+					String t = new String(line.buffer(), 0, line.length());
+					String HP = t.substring(t.indexOf(": ")+2);
 					int index = HP.indexOf(":");
 					if(index>0)
 					{
@@ -232,21 +228,20 @@ public class Client2Proxy
 				}
 				if(Config.isReplaceHost)
 				{
-					byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,(hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port).getBytes("iso8859-1"));
+					byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
 					writToBuffer(b);
-//					ByteArrayUtil.replace(Config.replaceHost,"\r\n".getBytes(),CLCR);
 					writToBuffer(ByteArrays.CLCR);
 				}
 				else
 				{
-					writToBuffer(line.getBytes("iso8859-1"));
+					bf.append(line.buffer(), 0, line.length());
 				}
 				//遇到了Host 就先把带有Host的信息写入，加快上级代理服务器识别地址速度
 				oStream.write(bf.buffer(),0,bf.length());
 				bf.setLength(0);
 				continue;
 			}
-			if(startsWith(littleLine, "accept:"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
 			{
 				if(Config.isDisguiseMMS)
 				{
@@ -254,11 +249,11 @@ public class Client2Proxy
 				}
 				else
 				{
-					writToBuffer(line.getBytes("iso8859-1"));
+					bf.append(line.buffer(), 0, line.length());
 				}
 				continue;
 			}
-			if(startsWith(littleLine, "content-type"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
 			{
 				if(Config.isDisguiseMMS)
 				{
@@ -266,11 +261,11 @@ public class Client2Proxy
 				}
 				else
 				{
-					writToBuffer(line.getBytes("iso8859-1"));
+					bf.append(line.buffer(), 0, line.length());
 				}
 				continue;
 			}
-			if(startsWith(littleLine, "connection"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Connection))
 			{
 				if(Config.isReplaceConnection)
 				{
@@ -280,11 +275,11 @@ public class Client2Proxy
 				}
 				else
 				{
-					writToBuffer(line.getBytes("iso8859-1"));
+					bf.append(line.buffer(), 0, line.length());
 				}
 				continue;
 			}
-			if(startsWith(littleLine, "x-online-host"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
 			{
 				if(Config.isReplaceXOnlineHost)
 				{
@@ -292,18 +287,18 @@ public class Client2Proxy
 				}
 				else
 				{
-					writToBuffer(line.getBytes("iso8859-1"));
+					bf.append(line.buffer(), 0, line.length());
 				}
 				continue;
 			}
-			writToBuffer(line.getBytes("iso8859-1"));
+			bf.append(line.buffer(), 0, line.length());
 		}
 		oStream.write(bf.buffer(), 0, bf.length());
 		//伪装彩信
 		if(Config.isDisguiseMMS)oStream.write(ByteArrays.MMS);
 		if(Config.isReplaceXOnlineHost && Config.replaceXOnlineHost.length>1)
 		{//要替换或强插XOnlineHost 且不为空时才插入
-			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,(hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port).getBytes("iso8859-1"));
+			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,hfl.HP);
 			oStream.write(b);
 			oStream.write(ByteArrays.CLCR);
 		}
@@ -318,35 +313,31 @@ public class Client2Proxy
 			oStream.write(patternMatching(Config.custom, hfl));
 			oStream.write(ByteArrays.CLCR);
 		}
-		for(String line= getLine(iStream); line.length() > 2; line= getLine(iStream))
+		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
 		{
-			String littleLine;
-			littleLine = line.length()>14 ? line.substring(0, 14).toLowerCase(Locale.ENGLISH):line.toLowerCase(Locale.ENGLISH);
-			if(littleLine.startsWith("content-length"))
+			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Content_Length))
 			{
-
-				content_length= Integer.parseInt(line.substring(15).trim());
-				oStream.write(line.getBytes("iso8859-1"));
+				content_length= Integer.parseInt(new String(line.buffer(),0,line.length()).trim());
+				oStream.write(line.buffer(),0,line.length());
 //				Log.d("ContentLength",String.valueOf(content_length));
 				continue;
 			}
-			if(startsWith(littleLine, "host"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 				if(Config.isReplaceHost)
 				{
-					byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,(hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port).getBytes("iso8859-1"));
+					byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
 					oStream.write(b);
-//					ByteArrayUtil.replace(Config.replaceHost,"\r\n".getBytes(),CLCR);
 					oStream.write(ByteArrays.CLCR);
 				}
 				else
 				{
-					oStream.write(line.getBytes("iso8859-1"));
+					oStream.write(line.buffer(),0,line.length());
 				}
 
 				continue;
 			}
-			if(startsWith(littleLine, "accept:"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept))
 			{
 				if(Config.isDisguiseMMS)
 				{
@@ -354,11 +345,11 @@ public class Client2Proxy
 				}
 				else
 				{
-					oStream.write(line.getBytes("iso8859-1"));
+					oStream.write(line.buffer(),0,line.length());
 				}
 				continue;
 			}
-			if(startsWith(littleLine, "content-type"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type))
 			{
 				if(Config.isDisguiseMMS)
 				{
@@ -366,11 +357,11 @@ public class Client2Proxy
 				}
 				else
 				{
-					oStream.write(line.getBytes("iso8859-1"));
+					oStream.write(line.buffer(),0,line.length());
 				}
 				continue;
 			}
-			if(startsWith(littleLine, "connection"))
+			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Connection))
 			{
 				if(Config.isReplaceConnection)
 				{
@@ -380,11 +371,11 @@ public class Client2Proxy
 				}
 				else
 				{
-					oStream.write(line.getBytes("iso8859-1"));
+					oStream.write(line.buffer(),0,line.length());
 				}
 				continue;
 			}
-			if(startsWith(littleLine, "x-online-host"))
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
 			{
 				if(Config.isReplaceXOnlineHost)
 				{
@@ -392,18 +383,18 @@ public class Client2Proxy
 				}
 				else
 				{
-					oStream.write(line.getBytes("iso8859-1"));
+					oStream.write(line.buffer(),0,line.length());
 				}
 				continue;
 			}
-			oStream.write(line.getBytes("iso8859-1"));
+			oStream.write(line.buffer(),0,line.length());
 		}
 		//彩信伪装
 		if(Config.isDisguiseMMS)oStream.write(ByteArrays.MMS);
 		//X-Online-Host设定
 		if(Config.isReplaceXOnlineHost && Config.replaceXOnlineHost.length>1)
 		{//要替换或强插XOnlineHost 且不为空时才插入
-			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,(hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port).getBytes("iso8859-1"));
+			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,hfl.HP);
 			oStream.write(b);
 			oStream.write(ByteArrays.CLCR);
 		}
@@ -421,21 +412,21 @@ public class Client2Proxy
 		}
 	}
 
-	public String getLine(BufferedInputStream iStream) throws IOException
+	public ByteArrayBuffer getLine(BufferedInputStream iStream) throws IOException
 	{
-		lineBuilder.setLength(0);
+		lineBF.setLength(0);
 		int l= 0;
 		while(l != '\n')
 		{
 			l= iStream.read();
 			if(l != -1)
 			{
-				lineBuilder.append((char)l);
+				lineBF.append(l);
 			}
 			else
 				break;
 		}
-		return lineBuilder.toString();
+		return lineBF;
 	}
 
 	protected boolean isSupport(String methord)
@@ -483,13 +474,13 @@ public class Client2Proxy
 					S2P.interrupt();
 				}
 
-				Socket serverSocket = new Socket(InetAddress.getByName(hfl.getHost()), hfl.getPort());
+				Socket serverSocket = new Socket(InetAddress.getByName(hfl.Host), hfl.Port);
 				conn.setNewServer(serverSocket);
 				S2P = new Server2Proxy(conn);
 				S2P.start();	//服务端线程启动的时机，新的服务端Socket被建立的时候
 				oStream = conn.getSerrverOUT();//更新输出流
-				OldHost = hfl.getHost();
-				OldPort = hfl.getPort();
+				OldHost = hfl.Host;
+				OldPort = hfl.Port;
 			}
 		}
 	}
