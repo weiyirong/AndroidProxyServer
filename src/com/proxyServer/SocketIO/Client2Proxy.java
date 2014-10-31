@@ -391,6 +391,7 @@ public class Client2Proxy
 			{
 				if(S2P !=null)
 				{
+					conn.closeServer();//之所以要在这里Close是因为如果不在这里Close，等到setNewServer方法被调用后，原来的线程终止了，那么他将关闭刚建立的到服务器的连接，而并没有关闭其自身真正携带的连接
 					S2P.interrupt();
 				}
 
