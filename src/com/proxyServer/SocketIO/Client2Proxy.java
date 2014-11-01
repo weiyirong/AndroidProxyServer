@@ -104,7 +104,7 @@ public class Client2Proxy
 	 */
 	protected boolean analyseFirstLine() throws HttpMethodNotSupportExpection, IOException, FirstLineFormatErrorExpection
 	{
-		ByteArrayBuffer b = getEndWithChar(iStream, '\n');
+		ByteArrayBuffer b = getLine(iStream);
 		if(b.length()==0) throw new ClientReadFirstLineExpection(null);
 //		String method = firstLineString.substring(0, 7);
 		//判断方法是否被支持
@@ -178,15 +178,16 @@ public class Client2Proxy
 			writToBuffer(patternMatching(Config.custom, hfl));
 			writToBuffer(ByteArrays.CLCR);
 		}
-		for(ByteArrayBuffer line= getEndWithChar(iStream, ':'); line.length() > 2; line= getEndWithChar(iStream, ':'))
+		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
 		{
+
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 //				if(noHost) 一定无Host字段
 				{
-					//尚未发现主机，现在刚发现Host字段，故要对远程主机进行连接，并且修改noHost
-					ByteArrayBuffer HP_Byte = getEndWithChar(Is)
-					String HP = new String(getEndWithChar(iStream,'\n').buffer(),1,)
+					//尚未发现主机，现在刚发现，故要对远程主机进行连接，并且修改noHost
+					String t = new String(line.buffer(), 0, line.length());
+					String HP = t.substring(t.indexOf(": ")+2);
 					int index = HP.indexOf(":");
 					if(index>0)
 					{
@@ -254,7 +255,7 @@ public class Client2Proxy
 		}
 		oStream.write(bf.buffer(), 0, bf.length());
 		//伪装彩信
-		if(Config.isDisguiseMMS)    oStream.write(ByteArrays.MMS);
+		if(Config.isDisguiseMMS)oStream.write(ByteArrays.MMS);
 		if(Config.isReplaceXOnlineHost && Config.replaceXOnlineHost.length!=0)
 		{//要替换或强插XOnlineHost 且不为空时才插入
 			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,hfl.HP);
@@ -333,14 +334,11 @@ public class Client2Proxy
 		}
 	}
 
-
-
-	//读到ch，或者流结尾时 返回数据
-	public ByteArrayBuffer getEndWithChar(BufferedInputStream iStream,char ch) throws IOException
+	public ByteArrayBuffer getLine(BufferedInputStream iStream) throws IOException
 	{
 		lineBF.setLength(0);
 		int l= 0;
-		while(l != ch)
+		while(l != '\n')
 		{
 			l= iStream.read();
 			if(l != -1)
@@ -351,15 +349,6 @@ public class Client2Proxy
 				break;
 		}
 		return lineBF;
-	}
-	//读到\n返回，但是不返回任何数据
-	public void getLineEmpty(BufferedInputStream iStream) throws IOException
-	{
-		int l= iStream.read();
-		while(l != '\n'|| l!=-1)
-		{
-			iStream.read();
-		}
 	}
 
 	protected boolean isSupport(String methord)
