@@ -26,22 +26,19 @@ public class SSLclient2Proxy
 			BufferedOutputStream bos= conn.getSerrverOUT();
 			BufferedInputStream bis = conn.getClientIN();
 			int byteRead;
-			while((byteRead= bis.read(buffer)) > 0)
+			while((byteRead= bis.read(buffer)) !=-1)
 			{
-				if(byteRead > 0)
-				{
-					bos.write(buffer, 0, byteRead);
-					bos.flush();
-				}
-				else
-				{
-					break;
-				}
+				bos.write(buffer, 0, byteRead);
+				bos.flush();
+				if(conn.isS2CCanClose()) break;
 			}
 		}
 		catch(Exception e)
 		{
 //			e.printStackTrace();
+		}finally
+		{
+			conn.closeS2C();
 		}
 
 	}

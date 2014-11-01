@@ -84,6 +84,13 @@
             android:summary="[M]=method,[H]=host,[P]=port,[U]=uri,[HP]=host+port,[V]=version,[S]=smart,[RN]=CLCR"
             android:title="要插入的自定义字段" />
     </PreferenceCategory>
+    <PreferenceCategory android:title="超时设定" >
+        <EditTextPreference
+                android:defaultValue="60"
+                android:key="timeout"
+                android:title="网络无连接超时时间设定"
+                android:summary="为0则不设置超时，单位(秒)"/>
+    </PreferenceCategory>
     <PreferenceCategory android:title="防跳设定" >
         <EditTextPreference
                 android:defaultValue="ccmni0"

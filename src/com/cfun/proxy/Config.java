@@ -29,6 +29,8 @@ public class Config
 	public static String shared_interface;
 	public static String bumian;
 	public static String banmian;
+
+	public static int   timeout=0;
 	public static void refresh(Context context) throws UnsupportedEncodingException
 	{
 		SharedPreferences pres = context.getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE);
@@ -42,15 +44,16 @@ public class Config
 		
 		proxyServer						=pres.getString("proxyServer", "");
 		beforeURL						=pres.getString("beforeURL", "").getBytes("iso8859-1");
-		firstLinePattern					=pres.getString("firstLinePattern", "");
+		firstLinePattern					=pres.getString("firstLinePattern", "").replace("[RN]","\r\n");
 		replaceHost						= ByteArrayUtil.replace(pres.getString("replaceHost", "").getBytes("iso8859-1"), new byte[]{'\\', 'n'}, new byte[]{'\r', '\n'});//完成\n到CLCR的替换
 		replaceXOnlineHost =ByteArrayUtil.replace(pres.getString("replaceXOnlineHost", "").getBytes("iso8859-1"), new byte[]{'\\', 'n'}, new byte[]{'\r', '\n'});//完成\n到CLCR的替换
-		custom								=pres.getString("custom", "");
+		custom								=pres.getString("custom", "").replace("[RN]","\r\n");
 		replaceConnection			=pres.getString("replaceConnection", "close").getBytes("iso8859-1");
 
 		gprs_interface              =pres.getString("gprs_interface", "ccmni0");
 		shared_interface            =pres.getString("shared_interface", "ap0 rndis0");
 		bumian                      =pres.getString("bumian", "");
 		banmian                     =pres.getString("banmian","");
+		timeout                     =Integer.parseInt(pres.getString("timeout","0").trim()) * 1000;
 	}
 }

@@ -30,21 +30,11 @@ public class Server2Proxy extends Thread
 		try
 		{
 			int byteRead;
-			while((byteRead= iStream.read(buffer)) > 0)
+			while((byteRead= iStream.read(buffer)) !=-1)
 			{
-				if(byteRead > 0)
-				{
-					oStream.write(buffer, 0, byteRead);
-					oStream.flush();
-				}
-				else
-				{
-					break;
-				}
-				if(conn.isS2CCanClose())
-				{
-					break;
-				}
+				oStream.write(buffer, 0, byteRead);
+				oStream.flush();
+				if(conn.isS2CCanClose()) break;
 			}
 		}
 		catch(Exception e)

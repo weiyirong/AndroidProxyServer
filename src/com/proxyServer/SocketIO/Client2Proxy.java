@@ -27,7 +27,7 @@ public class Client2Proxy
 	* [S] 聪明的后缀符号，根据情况，可能是?也可能是&
 	* [RN] 代表了CLCR,其实表示的是\r\n
 	* */
-	private static String[] searchList = {"[M]","[H]","[P]","[HP]","[V]","[S]","[RN]","[U]"}; //模式匹配时的查找字符串
+	private static String[] searchList = {"[M]","[H]","[P]","[HP]","[V]","[S]","[U]"}; //模式匹配时的查找字符串
 	private HttpConnection conn= null;
 	private HttpFirstLine hfl = null;
 	private String OldHost="";
@@ -104,7 +104,7 @@ public class Client2Proxy
 	 */
 	protected boolean analyseFirstLine() throws HttpMethodNotSupportExpection, IOException, FirstLineFormatErrorExpection
 	{
-		ByteArrayBuffer b = getLine(iStream);
+		ByteArrayBuffer b = getEndWithChar(iStream, '\n');
 		if(b.length()==0) throw new ClientReadFirstLineExpection(null);
 //		String method = firstLineString.substring(0, 7);
 		//判断方法是否被支持
@@ -152,7 +152,7 @@ public class Client2Proxy
 	{
 
 //		patternStringBuilder.setLength(0);//清空
-		String[] replaceList = {hfl.Method, hfl.Host, String.valueOf(hfl.Port), (hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port), hfl.Version, hf.Uri.indexOf('?')>0?"&":"?","\r\n", hfl.Uri};
+		String[] replaceList = {hfl.Method, hfl.Host, String.valueOf(hfl.Port), (hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port), hfl.Version, hf.Uri.indexOf('?')>0?"&":"?", hfl.Uri};
 		// {"[M]","[H]","[P]","[HP]","[V]","[S]","[RN]","[U]"}
 		String insert = replaceEach(str, searchList, replaceList);
 //		patternStringBuilder.append(insert);
@@ -178,16 +178,15 @@ public class Client2Proxy
 			writToBuffer(patternMatching(Config.custom, hfl));
 			writToBuffer(ByteArrays.CLCR);
 		}
-		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
+		for(ByteArrayBuffer line= getEndWithChar(iStream, ':'); line.length() > 2; line= getEndWithChar(iStream, ':'))
 		{
-
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 //				if(noHost) 一定无Host字段
 				{
-					//尚未发现主机，现在刚发现，故要对远程主机进行连接，并且修改noHost
-					String t = new String(line.buffer(), 0, line.length());
-					String HP = t.substring(t.indexOf(": ")+2);
+					//尚未发现主机，现在刚发现Host字段，故要对远程主机进行连接，并且修改noHost
+					ByteArrayBuffer HP_Byte = getEndWithChar(Is)
+					String HP = new String(getEndWithChar(iStream,'\n').buffer(),1,)
 					int index = HP.indexOf(":");
 					if(index>0)
 					{
@@ -255,8 +254,8 @@ public class Client2Proxy
 		}
 		oStream.write(bf.buffer(), 0, bf.length());
 		//伪装彩信
-		if(Config.isDisguiseMMS)oStream.write(ByteArrays.MMS);
-		if(Config.isReplaceXOnlineHost && Config.replaceXOnlineHost.length>1)
+		if(Config.isDisguiseMMS)    oStream.write(ByteArrays.MMS);
+		if(Config.isReplaceXOnlineHost && Config.replaceXOnlineHost.length!=0)
 		{//要替换或强插XOnlineHost 且不为空时才插入
 			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,hfl.HP);
 			oStream.write(b);
@@ -334,11 +333,14 @@ public class Client2Proxy
 		}
 	}
 
-	public ByteArrayBuffer getLine(BufferedInputStream iStream) throws IOException
+
+
+	//读到ch，或者流结尾时 返回数据
+	public ByteArrayBuffer getEndWithChar(BufferedInputStream iStream,char ch) throws IOException
 	{
 		lineBF.setLength(0);
 		int l= 0;
-		while(l != '\n')
+		while(l != ch)
 		{
 			l= iStream.read();
 			if(l != -1)
@@ -349,6 +351,15 @@ public class Client2Proxy
 				break;
 		}
 		return lineBF;
+	}
+	//读到\n返回，但是不返回任何数据
+	public void getLineEmpty(BufferedInputStream iStream) throws IOException
+	{
+		int l= iStream.read();
+		while(l != '\n'|| l!=-1)
+		{
+			iStream.read();
+		}
 	}
 
 	protected boolean isSupport(String methord)

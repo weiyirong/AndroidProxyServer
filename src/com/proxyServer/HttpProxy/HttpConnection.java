@@ -1,5 +1,7 @@
 package com.proxyServer.HttpProxy;
 
+import com.cfun.proxy.Config;
+
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -30,7 +32,8 @@ public class HttpConnection
 		this.clientSocket = client;
 		this.clientIn = new BufferedInputStream(client.getInputStream());
 		this.clientOut = new BufferedOutputStream(client.getOutputStream());
-		clientSocket.setSoTimeout(60000);
+		if(Config.timeout!=0)
+			clientSocket.setSoTimeout(Config.timeout);
 		count+=2;
 	}
 	public void setNewServer(Socket server) throws IOException
@@ -39,7 +42,9 @@ public class HttpConnection
 		this.serverSocket = server;
 		this.serverIn = new BufferedInputStream(server.getInputStream());
 		this.serverOut = new BufferedOutputStream(server.getOutputStream());
-		serverSocket.setSoTimeout(60000);
+
+		if(Config.timeout!=0)
+			serverSocket.setSoTimeout(Config.timeout);
 		count+=2;
 	}
 
@@ -102,7 +107,7 @@ public class HttpConnection
 
 	public void reduceCount()
 	{
-		if((--count)<1)
+		if((--count)==0)
 		{
 			try
 			{
@@ -168,9 +173,9 @@ public class HttpConnection
 			if(clientIn!=null && !clientSocket.isInputShutdown())
 			{
 				clientIn.close();
-				reduceCount();
 			}
 		}catch(Exception e){}
+		reduceCount();
 	}
 	public void closeClientOut()
 	{
@@ -179,9 +184,9 @@ public class HttpConnection
 			if (clientOut != null && !clientSocket.isOutputShutdown())
 			{
 				clientOut.close();
-				reduceCount();
 			}
 		}catch (Exception e){}
+		reduceCount();
 	}
 	public void closeServerIn()
 	{
@@ -190,10 +195,10 @@ public class HttpConnection
 			if(serverIn!=null && !serverSocket.isInputShutdown())
 			{
 				serverIn.close();
-				reduceCount();
 			}
 		}
 		catch (Exception e){}
+		reduceCount();
 
 	}
 	public void closeServerOut()
@@ -203,9 +208,9 @@ public class HttpConnection
 			if(serverOut!=null && !serverSocket.isOutputShutdown())
 			{
 				serverOut.close();
-				reduceCount();
 			}
 		}catch(Exception e){}
+		reduceCount();
 
 	}
 
