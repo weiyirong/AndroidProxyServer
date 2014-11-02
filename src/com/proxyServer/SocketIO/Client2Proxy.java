@@ -225,11 +225,10 @@ public class Client2Proxy
 				bf.setLength(0);
 				continue;
 			}
-			if(!Config.isDisguiseMMS &&
+			if(Config.isDisguiseMMS &&
 					(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept)||
 					ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type)))
 			{
-				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
 
@@ -246,9 +245,8 @@ public class Client2Proxy
 				writToBuffer(ByteArrays.CLCR);
 				continue;
 			}
-			if(!Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
+			if(Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
 			{
-				bf.append(line.buffer(), 0, line.length());
 				continue;
 			}
 			bf.append(line.buffer(), 0, line.length());
@@ -284,11 +282,10 @@ public class Client2Proxy
 				oStream.write(ByteArrays.CLCR);
 				continue;
 			}
-			if(!Config.isDisguiseMMS && (ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept)
+			if(Config.isDisguiseMMS && (ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept)
 					||
 					ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type)))
 			{
-				oStream.write(line.buffer(),0,line.length());
 				continue;
 			}
 			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Content_Length))
@@ -304,9 +301,8 @@ public class Client2Proxy
 				oStream.write(ByteArrays.CLCR);
 				continue;
 			}
-			if(!Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
+			if(Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
 			{
-				oStream.write(line.buffer(),0,line.length());
 				continue;
 			}
 			oStream.write(line.buffer(),0,line.length());

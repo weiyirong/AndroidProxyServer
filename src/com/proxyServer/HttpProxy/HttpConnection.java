@@ -2,13 +2,9 @@ package com.proxyServer.HttpProxy;
 
 import com.cfun.proxy.Config;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 
 public class HttpConnection
@@ -105,26 +101,42 @@ public class HttpConnection
 
 	}
 
-	public void reduceCount()
+	public void check()
 	{
-		if((--count)==0)
+		int c=0;
+		if(serverSocket==null)
+			c+=2;
+		else
 		{
-			try
+			if(serverSocket.isOutputShutdown())
+				c++;
+			if(serverSocket.isInputShutdown())
+				c++;
+		}
+		if(clientSocket==null)
+			c+=2;
+		else
+		{
+			if(clientSocket.isOutputShutdown())
+				c++;
+			if(clientSocket.isInputShutdown())
+				c++;
+		}
+		if(c==4)
+		{
+			if(serverSocket!=null) try
 			{
-				if(serverSocket!=null)serverSocket.close();
+				serverSocket.close();
+			} catch (IOException e)
+			{
+			}
+			if(clientSocket!=null) try
+			{
+				clientSocket.close();
 			} catch (IOException e)
 			{
 
 			}
-			//必须分开写 防止第一句话抛异常 导致第二句也不执行
-			try
-			{
-				if(clientSocket!=null)clientSocket.close();
-			} catch (IOException e)
-			{
-
-			}
-
 		}
 	}
 	public boolean isConnectToServer()
@@ -175,7 +187,7 @@ public class HttpConnection
 				clientIn.close();
 			}
 		}catch(Exception e){}
-		reduceCount();
+		check();
 	}
 	public void closeClientOut()
 	{
@@ -186,7 +198,7 @@ public class HttpConnection
 				clientOut.close();
 			}
 		}catch (Exception e){}
-		reduceCount();
+		check();
 	}
 	public void closeServerIn()
 	{
@@ -198,7 +210,7 @@ public class HttpConnection
 			}
 		}
 		catch (Exception e){}
-		reduceCount();
+		check();
 
 	}
 	public void closeServerOut()
@@ -210,7 +222,7 @@ public class HttpConnection
 				serverOut.close();
 			}
 		}catch(Exception e){}
-		reduceCount();
+		check();
 
 	}
 
