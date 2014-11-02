@@ -104,7 +104,7 @@ public class Client2Proxy
 	 */
 	protected boolean analyseFirstLine() throws HttpMethodNotSupportExpection, IOException, FirstLineFormatErrorExpection
 	{
-		ByteArrayBuffer b = getLine(iStream);
+		ByteArrayBuffer b = getToChar('\n',false);
 		if(b.length()==0) throw new ClientReadFirstLineExpection(null);
 //		String method = firstLineString.substring(0, 7);
 		//判断方法是否被支持
@@ -123,7 +123,6 @@ public class Client2Proxy
 
 		//判断是否是SSL，对SSL进行特殊处理
 		return  hfl.isSSL;
-
 	}
 
 	protected void writeFirstLine() throws IOException
@@ -143,7 +142,7 @@ public class Client2Proxy
 		oStream.write(ByteArrays.CLCR);
 
 	}
-	protected void writToBuffer(byte[] b)
+	protected void writToBF(byte[] b)
 	{
 		bf.append(b,0,b.length);
 	}
@@ -175,36 +174,38 @@ public class Client2Proxy
 
 		if(Config.isCustom)
 		{//要插入自定义信息
-			writToBuffer(patternMatching(Config.custom, hfl));
-			writToBuffer(ByteArrays.CLCR);
+			writToBF(patternMatching(Config.custom, hfl));
+			writToBF(ByteArrays.CLCR);
 		}
-		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
+		boolean readEmptyLineFirst = false;
+		for(ByteArrayBuffer line= getToChar(':',false); line.length() > 2; line= getToChar(':',readEmptyLineFirst))
 		{
-
+			readEmptyLineFirst = true;
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 //				if(noHost) 一定无Host字段
-				{
+//				{
 					//尚未发现主机，现在刚发现，故要对远程主机进行连接，并且修改noHost
-					String t = new String(line.buffer(), 0, line.length());
-					String HP = t.substring(t.indexOf(": ")+2);
+					ByteArrayBuffer HP_Byte = getToChar('\n',false);//获取行的后半部分
+					readEmptyLineFirst = false;
+					String HP = new String(HP_Byte.buffer(),1,HP_Byte.length()-3);
 					int index = HP.indexOf(":");
 					if(index>0)
 					{
 						hfl.Host = HP.substring(0,index);
-						hfl.Port = Integer.parseInt(HP.substring(index+1),HP.length()-2);
+						hfl.Port = Integer.parseInt(HP.substring(index+1));
 						hfl.HP = HP.getBytes("iso8859-1");
 					}
 					else
 					{
-						hfl.Host = HP.trim();
+						hfl.Host = HP;
 						hfl.Port = 80;
 						hfl.HP   = HP.getBytes("iso8859-1");
 					}
 					ConnectToServer();
 					if(conn.isConnectToServer())
 						throw  new ServerNotConnectedExecption();
-				}
+//				}
 				//HOST已经找到，此时可以直接向输入流中写入数据
 				{
 					//直接写入第一行数据进输出流
@@ -213,12 +214,14 @@ public class Client2Proxy
 				if(Config.isReplaceHost)
 				{
 					byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
-					writToBuffer(b);
-					writToBuffer(ByteArrays.CLCR);
+					writToBF(b);
+					writToBF(ByteArrays.CLCR);
 				}
 				else
 				{
-					bf.append(line.buffer(), 0, line.length());
+					//写入原Host
+					writToBF(ByteArrays.Host_Full);//(Host:) 写前半部分
+					bf.append(HP_Byte.buffer(),0,HP_Byte.length());//写后半部分
 				}
 				//遇到了Host 就先把带有Host的信息写入，加快上级代理服务器识别地址速度
 				oStream.write(bf.buffer(),0,bf.length());
@@ -234,22 +237,30 @@ public class Client2Proxy
 
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Length))
 			{
-				content_length= Integer.parseInt(new String(line.buffer(),16,line.length()-18));
-				bf.append(line.buffer(), 0, line.length());
+				bf.append(line.buffer(), 0, line.length());//先写头部 因为Tail和Line其实指向的是同一对象
+
+				ByteArrayBuffer tail = getToChar('\n',false);
+				readEmptyLineFirst = false;
+				content_length= Integer.parseInt(new String(tail.buffer(),1,tail.length()-3));
+				//写入contentLength
+
+				bf.append(tail.buffer(), 0, tail.length());//写入尾部
 				continue;
 			}
 			if(Config.isReplaceConnection && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Connection))
 			{
-				writToBuffer(ByteArrays.Connection);
-				writToBuffer(Config.replaceConnection);
-				writToBuffer(ByteArrays.CLCR);
+				writToBF(ByteArrays.Connection);
+				writToBF(Config.replaceConnection);
+				writToBF(ByteArrays.CLCR);
 				continue;
 			}
 			if(Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
 			{
 				continue;
 			}
-			bf.append(line.buffer(), 0, line.length());
+			bf.append(line.buffer(), 0, line.length());//写头部
+			write2BufferToLineEnd(bf);//写尾部
+			readEmptyLineFirst = false;
 		}
 		oStream.write(bf.buffer(), 0, bf.length());
 		//伪装彩信
@@ -271,10 +282,11 @@ public class Client2Proxy
 			oStream.write(patternMatching(Config.custom, hfl));
 			oStream.write(ByteArrays.CLCR);
 		}
-		for(ByteArrayBuffer line= getLine(iStream); line.length() > 2; line= getLine(iStream))
+		boolean readEmptyLineFirst = false;
+		for(ByteArrayBuffer line= getToChar(':',false); line.length() > 2; line= getToChar(':',readEmptyLineFirst))
 		{
 //			String aaaa = new String(line.buffer(),0,line.length());
-
+			readEmptyLineFirst = true;
 			if(Config.isReplaceHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 				byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
@@ -290,8 +302,14 @@ public class Client2Proxy
 			}
 			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Content_Length))
 			{
-				content_length= Integer.parseInt(new String(line.buffer(),16,line.length()-18));
-				oStream.write(line.buffer(),0,line.length());
+				oStream.write(line.buffer(), 0, line.length());//先写头部 因为Tail和Line其实指向的是同一对象
+
+				ByteArrayBuffer tail = getToChar('\n',false);
+				readEmptyLineFirst = false;
+				content_length= Integer.parseInt(new String(tail.buffer(),1,tail.length()-3));
+				//写入contentLength
+
+				oStream.write(tail.buffer(), 0, tail.length());//写入尾部
 				continue;
 			}
 			if(Config.isReplaceConnection && ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Connection))
@@ -305,7 +323,9 @@ public class Client2Proxy
 			{
 				continue;
 			}
-			oStream.write(line.buffer(),0,line.length());
+			oStream.write(line.buffer(),0,line.length());//写入头部
+			write2OstreamToLineEnd();//写入尾部
+			readEmptyLineFirst = false;
 		}
 		//彩信伪装
 		if(Config.isDisguiseMMS)oStream.write(ByteArrays.MMS);
@@ -330,11 +350,14 @@ public class Client2Proxy
 		}
 	}
 
-	public ByteArrayBuffer getLine(BufferedInputStream iStream) throws IOException
+
+	public ByteArrayBuffer getToChar(char ch, boolean readEmptyLineFirst) throws IOException
 	{
+		if(readEmptyLineFirst)
+			emptyReadToLineEnd();
 		lineBF.setLength(0);
 		int l= 0;
-		while(l != '\n')
+		while(l != ch)
 		{
 			l= iStream.read();
 			if(l != -1)
@@ -345,6 +368,43 @@ public class Client2Proxy
 				break;
 		}
 		return lineBF;
+	}
+	public void emptyReadToLineEnd() throws IOException
+	{
+		int l= 0;
+		while(l != '\n')
+		{
+			l= iStream.read();
+			if(l == -1) break;
+		}
+	}
+	public void write2BufferToLineEnd(ByteArrayBuffer bab) throws IOException
+	{
+		int l= 0;
+		while(l != '\n')
+		{
+			l= iStream.read();
+			if(l != -1)
+			{
+				bab.append(l);
+			}
+			else
+				break;
+		}
+	}
+	public void write2OstreamToLineEnd() throws IOException
+	{
+		int l= 0;
+		while(l != '\n')
+		{
+			l= iStream.read();
+			if(l != -1)
+			{
+				oStream.write(l);
+			}
+			else
+				break;
+		}
 	}
 
 	protected boolean isSupport(String methord)
