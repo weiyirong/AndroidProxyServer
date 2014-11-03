@@ -355,8 +355,16 @@ public class Client2Proxy
 	{
 		if(readEmptyLineFirst)
 			emptyReadToLineEnd();
+
 		lineBF.setLength(0);
-		int l= 0;
+		int l= iStream.read();
+
+		if(l==-1 || l=='\r')
+		{
+			iStream.read();
+			return lineBF;
+		}
+		lineBF.append(l);
 		while(l != ch)
 		{
 			l= iStream.read();
