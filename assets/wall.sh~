@@ -15,10 +15,9 @@ BUMIAN="[bumian]"
 ##参数设置
 #网卡: （缺少的网卡自行添加，多余的网卡可以删除）
 IF="[gprs_interface]"
-
 #共享网卡 用于托电脑进行免流
-IF_SHARE="[shared_interface]"
 
+IF_SHARE="[shared_interface]"
 #全局代理IP:
 IP="127.0.0.1"
 #全局代理端口:

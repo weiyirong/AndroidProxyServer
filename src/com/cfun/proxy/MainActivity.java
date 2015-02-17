@@ -26,7 +26,7 @@ public class MainActivity extends Activity
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
-//		if(!isCan()) {this.finish(); System.exit(1); return;}
+		if(!isCan()) {this.finish(); System.exit(1); return;}
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
