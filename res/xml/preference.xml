@@ -1,106 +1,106 @@
 <?xml version="1.0" encoding="utf-8"?>
-<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <PreferenceCategory android:title="代理服务器设定" >
+    <PreferenceCategory android:title="代理服务器设定">
         <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="isProxyServer"
-            android:title="是否使用代理服务器" />
+                android:defaultValue="false"
+                android:key="isProxyServer"
+                android:title="是否使用代理服务器"/>
 
         <EditTextPreference
-            android:defaultValue="10.0.0.172:80"
-            android:key="proxyServer"
-            android:title="代理IP和端口号" />
+                android:defaultValue="10.0.0.172:80"
+                android:key="proxyServer"
+                android:title="代理IP和端口号"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="前插内容设定" >
+    <PreferenceCategory android:title="前插内容设定">
         <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="isBeforeURL"
-            android:title="是否前插内容" >
+                android:defaultValue="false"
+                android:key="isBeforeURL"
+                android:title="是否前插内容">
         </CheckBoxPreference>
 
         <EditTextPreference
-            android:defaultValue="wap.10010.com"
-            android:key="beforeURL"
-            android:title="前插时的URL" />
+                android:defaultValue="wap.10010.com"
+                android:key="beforeURL"
+                android:title="前插时的URL"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="HTTP请求行设定" >
+    <PreferenceCategory android:title="HTTP请求行设定">
         <EditTextPreference
-            android:defaultValue="[M] http://[HP][U][S]mob.10010.com [V]"
-            android:key="firstLinePattern"
-            android:summary="[M]=method,[H]=host,[P]=port,[U]=uri,[HP]=host+port,[V]=version,[S]=smart,[RN]=CLCR"
-            android:title="模式匹配第一行数据"/>
+                android:defaultValue="[M] http://[HP][U][S]m.client.10010.com [V]"
+                android:key="firstLinePattern"
+                android:summary="[M]=method,[H]=host,[P]=port,[U]=uri,[HP]=host+port,[V]=version,[S]=smart,[RN]=CLCR"
+                android:title="模式匹配第一行数据"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="HOST域设定" >
+    <PreferenceCategory android:title="HOST域设定">
         <CheckBoxPreference
                 android:title="是否替换原Host"
-            android:defaultValue="false"
-            android:key="isReplaceHost"/>
+                android:defaultValue="false"
+                android:key="isReplaceHost"/>
 
         <EditTextPreference
-            android:defaultValue="Host: mob.10010.com"
-            android:key="replaceHost"
-            android:title="更改的Host"
-            android:summary="可以用\\n代表换行，程序会在最后自动添加换行,模式匹配时用[H]代表真正的HOST"/>
+                android:defaultValue="Host: m.client.10010.com"
+                android:key="replaceHost"
+                android:title="更改的Host"
+                android:summary="可以用\\n代表换行，程序会在最后自动添加换行,模式匹配时用[H]代表真正的HOST"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="伪装彩信设定" >
+    <PreferenceCategory android:title="伪装彩信设定">
         <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="isDisguiseMMS"
-            android:title="是否伪装成彩信" />
+                android:defaultValue="false"
+                android:key="isDisguiseMMS"
+                android:title="是否伪装成彩信"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="X-Online-Host域设定" >
+    <PreferenceCategory android:title="X-Online-Host域设定">
 
         <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="isReplaceXOnlineHost"
-            android:title="是否插入或修改X-Online-Host" />
-
-        <EditTextPreference
-            android:defaultValue="wap.ha.10086.com"
-            android:key="replaceXOnlineHost"
-            android:title="要更换的X-Online-Host"
-            android:summary="当更改被选中，本项为空时会删除原来的X-Online-Host;模式匹配时可以用\\n代表换行,用[X]代表真正的X-Online-Host"/>
-    </PreferenceCategory>
-    <PreferenceCategory android:title="Connection域设定" >
-        <CheckBoxPreference
-            android:defaultValue="false"
-            android:title="是否替换Connection" 
-            android:key="isReplaceConnection"/>
+                android:defaultValue="false"
+                android:key="isReplaceXOnlineHost"
+                android:title="是否插入或修改X-Online-Host"/>
 
         <EditTextPreference
-            android:defaultValue="close"
-            android:title="要替换的Connection"
-            android:key="replaceConnection" />
+                android:defaultValue="wap.ha.10086.com"
+                android:key="replaceXOnlineHost"
+                android:title="要更换的X-Online-Host"
+                android:summary="当更改被选中，本项为空时会删除原来的X-Online-Host;模式匹配时可以用\\n代表换行,用[X]代表真正的X-Online-Host"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="自定义字段设定" >
+    <PreferenceCategory android:title="Connection域设定">
         <CheckBoxPreference
-            android:defaultValue="false"
-            android:key="isCustom"
-            android:title="是否插入自定义字段" />
+                android:defaultValue="false"
+                android:title="是否替换Connection"
+                android:key="isReplaceConnection"/>
 
         <EditTextPreference
-            android:key="custom"
-            android:summary="[M]=method,[H]=host,[P]=port,[U]=uri,[HP]=host+port,[V]=version,[S]=smart,[RN]=CLCR"
-            android:title="要插入的自定义字段" />
+                android:defaultValue="close"
+                android:title="要替换的Connection"
+                android:key="replaceConnection"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="超时设定" >
+    <PreferenceCategory android:title="自定义字段设定">
+        <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="isCustom"
+                android:title="是否插入自定义字段"/>
+
+        <EditTextPreference
+                android:key="custom"
+                android:summary="[M]=method,[H]=host,[P]=port,[U]=uri,[HP]=host+port,[V]=version,[S]=smart,[RN]=CLCR"
+                android:title="要插入的自定义字段"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="超时设定">
         <EditTextPreference
                 android:defaultValue="60"
                 android:key="timeout"
                 android:title="网络无连接超时时间设定"
                 android:summary="为0则不设置超时，单位(秒)"/>
     </PreferenceCategory>
-    <PreferenceCategory android:title="防跳设定" >
+    <PreferenceCategory android:title="防跳设定">
         <EditTextPreference
                 android:defaultValue="ccmni0"
                 android:key="gprs_interface"
-                android:title="网卡名称" />
+                android:title="网卡名称"/>
 
         <EditTextPreference
                 android:defaultValue="ap0 rndis0"
                 android:key="shared_interface"
-                android:title="WiFi和USB共享网卡" />
+                android:title="WiFi和USB共享网卡"/>
     </PreferenceCategory>
 
 </PreferenceScreen>

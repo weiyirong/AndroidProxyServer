@@ -1,90 +1,108 @@
-#!/system/bin/sh
-#扫地僧防跳脚本4.0.1专业版
+﻿﻿#!/system/bin/sh
 
-##########
-##排除设置
-#半免排除UID: （在下面引号中添加应用的uid，必须按照"10001 10002 10003"的格式）
-BANMIAN="[banmian]"
+#网卡名称
+IF_NAME="[gprs_interface]"
 
-#不免排除UID: （在下面引号中添加应用的uid，必须按照"10001 10002 10003"的格式）
-BUMIAN="[bumian]"
+#WIFI和usb共享网卡
+S_IF=([shared_interface])
 
+#半免UID
+UID=([banmian])
 
+#完全排除，目前我完全排除的只有支付宝，或许银行的app也要完全排除
+UID2=([bumian])
 
-##########
-##参数设置
-#网卡: （缺少的网卡自行添加，多余的网卡可以删除）
-IF="[gprs_interface]"
+#将10081修改为你的almp的UID，其它软件用改为0
+GID="[uid]"
 
-#共享网卡 用于托电脑进行免流
-IF_SHARE="[shared_interface]"
+#默认启用HTTPS，登陆用到，关闭(HTTPS="#")即可,注意双引号中有个空格，否则不会生效
+#特别注意115网盘5.0是走HTTPS的，如果想免流量使用，请使用旧版4.0，
+#其他常用app一般走HTTPS流量比较少，基本可以忽略不计
 
-#全局代理IP:
+HTTPS=" "
+
+#全局代理IP
 IP="127.0.0.1"
-#全局代理端口:
+
+#代理端口
 PORT="10080"
 
-#全局代理UID: （almp和anmpp默认为0，其它全局软件请改为对应的UID）
-ROOT="[uid]"
-
-#HTTPS放行:
-HTTPS=""
-
-
-#DNS开关：
-DNS=""
-
-#DNS IP:
-DNSIP="114.114.115.115"
-
-
-
-
-
-
-##以下所有代码请勿修改
-
-##########
-##防跳规则
-iptables -t nat -F
-iptables -t nat -N sdswall
-for sdsif in $IF
-do
-if [ $sdsif != "" ]
-then
-iptables -t nat -I OUTPUT -o $sdsif -j sdswall
-fi
-done
-iptables -t nat -I sdswall -p 132 -j DNAT --to-destination $IP:$PORT
-iptables -t nat -I sdswall -p 17 -j DNAT --to-destination $IP:$PORT
-iptables -t nat -I sdswall -p 6 -j DNAT --to-destination $IP:$PORT
-
-
-#########
-#排除规则
-#root
-iptables -t nat -I sdswall -p 6 -m owner --uid-owner $ROOT -j ACCEPT
-#HTTPS
-$HTTPS iptables -t nat -I sdswall -p 6 --dport 443 -j ACCEPT
 #DNS
-#$DNS 
-iptables -t nat -I sdswall -p 17 --dport 53 -j ACCEPT 
-#--to-destination $DNSIP:53
-#通用半免
-for sdsuid in $BANMIAN
+DNSIP="114.114.114.114"
+
+
+#链名
+CName="sdswall"
+
+#################################
+#此部分切勿修改，否则后果自负！
+
+iptables -t nat -F
+iptables -t mangle -F
+iptables -t nat -N $CName
+iptables -t nat -I OUTPUT -o $IF_NAME -j $CName 
+
+
+#防跳,新旧iptables写法不同，都写了。
+iptables -t mangle -I PREROUTING -i $IF_NAME ! -p icmp -m state --state RELATED,INVALID -j DROP
+iptables -t mangle -I PREROUTING -i $IF_NAME -p ! icmp -m state --state RELATED,INVALID -j DROP
+
+
+iptables -t nat -I $CName -p udp -j DNAT --to-destination $IP:$PORT
+iptables -t nat -I $CName -p tcp -j DNAT --to-destination $IP:$PORT
+iptables -t nat -I $CName -p sctp -j DNAT --to-destination $IP:$PORT
+
+
+#排除HTTPS协议，默认启用
+iptables -t nat -I $CName -p tcp --dport 443 -j ACCEPT
+
+
+###########
+
+#半免UID
+
+for uid in ${UID[@]};
 do
-if [ $sdsuid != "" ]
-then
-iptables -t nat -I sdswall -m owner --uid-owner $sdsuid -j ACCEPT
-iptables -t nat -I sdswall -m owner --uid-owner $sdsuid -p 6 --dport 80 -j DNAT --to-destination $IP:$PORT
+if [ $uid ];then
+iptables -t nat -I $CName -m owner --uid-owner $uid -j ACCEPT
 fi
 done
-#通用不免
-for sds2uid in $BUMIAN
+
+############
+#重定向HTTP
+iptables -t nat -I $CName -p tcp --dport 80 -j  DNAT --to-destination  $IP:$PORT
+
+#排除免流程序
+iptables -t nat -I $CName -p tcp -m owner --uid-owner $GID  -j ACCEPT
+
+#不免
+for uid2 in ${UID2[@]};
 do
-if [ $sds2uid != "" ]
-then
-iptables -t nat -I sdswall -m owner --uid-owner $sds2uid -j ACCEPT
+if [ $uid2 ];then
+iptables -t nat -I $CName -p tcp -m owner --uid-owner $uid2 -j ACCEPT
 fi
 done
+
+#share
+iptables -t nat -I POSTROUTING -o $IF_NAME -s 192.168.43.0/24 -j MASQUERADE
+iptables -t nat -I POSTROUTING -o $IF_NAME -s 192.168.42.0/24 -j MASQUERADE
+
+for ifname in ${S_IF[@]};
+do
+if [ $ifname ];then
+iptables -t nat -I PREROUTING -i $ifname -s 192.168.43.0/24 -p tcp --dport 80 -j  REDIRECT --to-ports  $PORT
+iptables -t nat -I PREROUTING -i $ifname -s 192.168.42.0/24 -p tcp --dport 80 -j  REDIRECT --to-ports  $PORT
+fi
+done
+
+iptables -t nat -I $CName -p tcp --dport 53 -j  ACCEPT
+
+
+#PS:安安修改，原创作者：扫地僧5.0
+#iptables -I INPUT ! -p icmp -m string --string "广告" --algo bm -j DROP
+
+#必须开启转发功能!
+echo "1"  > /proc/sys/net/ipv4/ip_forward 
+
+#非samp把GID换成0，将代理换成80即可
 

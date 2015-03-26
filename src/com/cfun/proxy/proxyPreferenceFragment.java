@@ -20,8 +20,6 @@ public class proxyPreferenceFragment extends PreferenceFragment {
 	public void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		addPreferencesFromResource(R.xml.preference);
-//		getActivity().findViewById(android.R.id.content).setBackgroundResource(R.drawable.bg);
-//		getActivity().findViewById(android.R.id.content).setBackgroundColor(Color.argb(255,20,20,38));
 	}
 
 	@Override
@@ -42,7 +40,7 @@ public class proxyPreferenceFragment extends PreferenceFragment {
 	@Override
 	public void onResume()
 	{
-		SharedPreferences pres = getActivity().getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE);
+		SharedPreferences pres = getActivity().getSharedPreferences(Config.app_PerferenceName,android.content.Context.MODE_PRIVATE);
 		Set<String> all =   pres.getAll().keySet();
 		for(String key:all)
 		{
@@ -57,5 +55,4 @@ public class proxyPreferenceFragment extends PreferenceFragment {
 		
 		super.onResume();
 	}
-
 }

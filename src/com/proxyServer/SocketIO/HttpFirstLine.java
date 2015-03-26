@@ -43,7 +43,6 @@ public class HttpFirstLine
 			int index= str.indexOf('/');
 			parstHost(str.substring(0, index));
 			Uri= str.substring(index);
-
 		}
 		else
 		{

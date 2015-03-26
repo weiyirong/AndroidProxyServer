@@ -52,13 +52,13 @@ public class AppsList extends Activity
 				String another;
 				if(isNotFree)
 				{
-					mian= getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE).getString("bumian","");
-					another = getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE).getString("banmian","");
+					mian= getSharedPreferences(Config.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("bumian","");
+					another = getSharedPreferences(Config.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("banmian","");
 				}
 				else
 				{
-					mian= getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE).getString("banmian","");
-					another = getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE).getString("bumian","");
+					mian= getSharedPreferences(Config.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("banmian","");
+					another = getSharedPreferences(Config.app_PerferenceName, android.content.Context.MODE_PRIVATE).getString("bumian","");
 				}
 
 				HashSet<Integer> se = new HashSet<>();
@@ -131,7 +131,7 @@ public class AppsList extends Activity
 	{
 		findViewById(R.id.listView_list_apps).setLongClickable(true);
 
-		findViewById(R.id.listView_list_apps).setOnTouchListener(new GestureListener(this)
+		findViewById(R.id.listView_list_apps).setOnTouchListener(new GestureListener()
 		{
 			@Override
 			public boolean left()
@@ -204,7 +204,7 @@ public class AppsList extends Activity
 			select+=(String.valueOf(o)+" ");
 		}
 		if(select.length()>1) select = select.substring(0,select.length()-1);
-		SharedPreferences.Editor e = getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE).edit();
+		SharedPreferences.Editor e = getSharedPreferences(Config.app_PerferenceName, android.content.Context.MODE_PRIVATE).edit();
 		if(isNotFree)
 		{
 			e.putString("bumian",select);

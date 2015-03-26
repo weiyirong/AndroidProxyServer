@@ -9,6 +9,8 @@ import com.foundationdb.tuple.ByteArrayUtil;
 
 public class Config 
 {
+	public static String app_PerferenceName="com.cfun.proxy_preferences";
+
 	public static boolean isProxyServer;
 	public static boolean isBeforeURL;
 	public static boolean isReplaceHost;
@@ -33,7 +35,7 @@ public class Config
 	public static int   timeout=0;
 	public static void refresh(Context context) throws UnsupportedEncodingException
 	{
-		SharedPreferences pres = context.getSharedPreferences("com.cfun.proxy_preferences",android.content.Context.MODE_PRIVATE);
+		SharedPreferences pres = context.getSharedPreferences(Config.app_PerferenceName, android.content.Context.MODE_PRIVATE);
 		isProxyServer 					= pres.getBoolean("isProxyServer", false);
 		isBeforeURL 						= pres.getBoolean("isBeforeURL", false);
 		isReplaceHost 					= pres.getBoolean("isReplaceHost", false);

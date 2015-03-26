@@ -12,7 +12,7 @@ import android.widget.Toast;
 import com.cfun.proxy.Config;
 import com.cfun.proxy.MainActivity;
 import com.cfun.proxy.R;
-import com.cfun.proxy.util.ContextUtil;
+import com.cfun.proxy.Base.BaseApplication;
 import com.proxyServer.proxy.Proxy;
 
 public class ProxyService extends Service
@@ -127,8 +127,8 @@ class UpdateNotification implements Runnable
 			if(die)
 				break;
 			String str = "当前活跃线程总数:"+ Thread.activeCount();
-			notification.setLatestEventInfo(ContextUtil.getContext(),"代理服务正在运行",str,pi);
-			((NotificationManager)ContextUtil.getContext().getSystemService(Context.NOTIFICATION_SERVICE)).notify(1, notification);
+			notification.setLatestEventInfo(BaseApplication.getInstance(),"代理服务正在运行",str,pi);
+			((NotificationManager) BaseApplication.getInstance().getSystemService(Context.NOTIFICATION_SERVICE)).notify(1, notification);
 			try
 			{
 				Thread.sleep(2000);

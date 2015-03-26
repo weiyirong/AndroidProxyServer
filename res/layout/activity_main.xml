@@ -6,54 +6,67 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    tools:context="com.cfun.myservice.MainActivity" 
-     android:gravity="center"
-     android:background="@drawable/bg" >
+    tools:context="com.cfun.myservice.MainActivity"
+    android:background="@drawable/bg"
+        android:gravity="center">
     <LinearLayout
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-            android:layout_marginTop="120dp">
-
-         <TableLayout 
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-        <TableRow 
-           android:layout_width="match_parent"
-        	android:layout_height="wrap_content">
-            <Button 
-                android:text="开启服务"
-                android:id="@+id/btnStartService"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="onStartService"/>
-             <Button 
-                android:text="关闭服务"
-                android:id="@+id/btnStopService"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="onStopService"/>
-        </TableRow>
-        <TableRow 
-            android:layout_width="match_parent"
-       		android:layout_height="wrap_content">
-            <Button 
-                android:text="选择不免"
-                android:id="@+id/btnOpenIptables"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="btnNotFree"/>
-             <Button 
-                android:text="选择半免"
-                android:id="@+id/btnCloseIptables"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:onClick="btnNotAllFree"/>
-        </TableRow>
-    </TableLayout>
+            android:orientation="vertical"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content" android:id="@+id/butttons" android:layout_marginTop="100dp">
+        <!--<ScrollView-->
+                <!--android:layout_width="match_parent"-->
+                <!--android:layout_height="200dp"-->
+                <!--android:id="@+id/scrollView"-->
+                <!--android:visibility="visible"-->
+               <!-->-->
+            <!--<TextView-->
+                    <!--android:layout_width="wrap_content"-->
+                    <!--android:layout_height="wrap_content"-->
+                    <!--android:id="@+id/textView" android:textColor="@android:color/background_dark"/>-->
+        <!--</ScrollView>-->
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="16sp"
+                  android:layout_marginBottom="5dp" android:id="@+id/tv_apn" android:gravity="right"
+                  android:layout_marginRight="10dp" android:layout_marginLeft="3dp"
+                  android:textColor="@android:color/white"/>
+            <RadioGroup android:layout_width="match_parent" android:layout_height="wrap_content"
+                        android:orientation="horizontal" android:background="#6806a9fb" android:layout_marginLeft="3dp"
+                        android:layout_marginRight="3dp" android:layout_marginBottom="10dp">
+                <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="联通"
+                        android:id="@+id/rb_union" android:layout_weight="1" android:checked="false"
+                        />
+                <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="移动"
+                        android:id="@+id/rb_mobile" android:layout_weight="1" android:checked="false"/>
+                <RadioButton
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="自定义"
+                        android:id="@+id/rb_none" android:layout_weight="1" android:checked="false"/>
+            </RadioGroup>
+        <LinearLayout
+                android:orientation="horizontal"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content">
+            <Button
+                    android:text="开启服务"
+                    android:id="@+id/btnStartService"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onStartService"/>
+            <Button
+                    android:text="关闭服务"
+                    android:id="@+id/btnStopService"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:onClick="onStopService"/>
+        </LinearLayout>
     </LinearLayout>
+
 </RelativeLayout>

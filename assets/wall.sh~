@@ -1,89 +1,313 @@
 #!/system/bin/sh
-#扫地僧防跳脚本4.0.1专业版
-
-##########
-##排除设置
-#半免排除UID: （在下面引号中添加应用的uid，必须按照"10001 10002 10003"的格式）
-BANMIAN="[banmian]"
-
-#不免排除UID: （在下面引号中添加应用的uid，必须按照"10001 10002 10003"的格式）
-BUMIAN="[bumian]"
+#扫地僧防火墙脚本 5.0
 
 
+#     =================
+#     ∥   应用放行设置   ∥
+#     =================
 
-##########
-##参数设置
-#网卡: （缺少的网卡自行添加，多余的网卡可以删除）
-IF="[gprs_interface]"
-#共享网卡 用于托电脑进行免流
+#半免放行:
+UID1="[banmian]"
+#提示：在上面引号中添加应用的uid，多个uid之间以空格间隔。
 
-IF_SHARE="[shared_interface]"
-#全局代理IP:
+#不免放行:
+UID2="[bumian]"
+#提示：在上面引号中添加应用的uid，多个uid之间以空格间隔。
+
+#禁止联网:
+UID3=""
+#警告：会完全禁止应用联网，慎用！已默认禁止UID：1000。
+#提示：在上面引号中添加应用的uid，多个uid之间以空格间隔。
+
+
+
+#     =================
+#     ∥   本机防护设置   ∥
+#     =================
+
+#代理IP：
 IP="127.0.0.1"
-#全局代理端口:
-PORT="10080"
+#代理端口：
+PORT="80"
 
-#全局代理UID: （almp和anmpp默认为0，其它全局软件请改为对应的UID）
-ROOT="[uid]"
+#DNS放行：
+DNS="on"
+#提示：关闭DNS后本机大部分视频软件将无法在线播放。
 
-#HTTPS放行:
-HTTPS=""
+#DNS自定义:
+DNSIP="114.114.114.114"
+#提示：建议使用本地DNS，如果不填写(不能有空格)将使用默认的DNS。
 
+#HTTPS放行：
+HTTPS="off"
 
-#DNS开关：
-DNS=""
-
-#DNS IP:
-DNSIP="114.114.115.115"
-
-
-
-
+#WIFI网卡：
+WIFIIF="wlan0"
+#提示：如果WIFI下无法联网，请替换为你的WIFI网卡。
 
 
-##以下所有代码请勿修改
 
-##########
-##防跳规则
+#     =================
+#     ∥   共享防护设置   ∥
+#     =================
+
+#共享设备DNS放行：
+SDNS="on"
+#提示：关闭DNS后被共享的设备大部分视频软件将无法在线播放，拖电脑必须开启。
+
+#共享设备HTTPS放行：
+SHTTPS="off"
+
+#共享手机QQ放行：
+MQQ="off"
+#提示：开启后会消耗较多流量。
+
+#共享设备端口放行：
+#TCP端口：
+STCP=""
+#UDP端口：
+SUDP=""
+#提示：在上面的引号中输入端口，以空格间隔。
+
+#共享设备IP段：
+SIP=""
+#格式：按格式x.x.x.0/24加入上面引号中。
+#提示：已经默认集成192.168.43.*和192.168.42.*的IP段。
+
+
+
+
+#以下所有代码请勿修改
+
+#     =================
+#     ∥   防护规则代码   ∥
+#     =================
+
+SDS="扫地僧防火墙"
+key="64aad5737412116408fd426f4ebb5139"
+if_name=`netcfg | grep -v "/0" | grep -v "lo" | cut -d " " -f 1`
+ip_address=`netcfg | grep -v "/0" | grep -v "127.0.0.1" | tr -s " " | cut -d " " -f 3- | cut -d "/" -f 1`
+mobile_mc=`cat /system/build.prop | grep ro.product.manufacturer | cut -d "=" -f 2`
+mobile_model=`cat /system/build.prop | grep ro.product.model | cut -d "=" -f 2`
+android_ver=`cat /system/build.prop | grep ro.build.version.release | cut -d "=" -f 2`
+bb_ver=`busybox --help | head -1 | cut -d "v" -f 2 | cut -d " " -f 1`
+ipt_ver=`iptables -V|cut -d "v" -f 2`
+sds=`echo -n $SDS|md5sum`
+echo -n " $SDS"
+echo "脚本 v5.0"
+echo " =================="
+echo
+echo " 系统检测："
+echo " ------------------"
+if [[ ${sds%%\ *} == $key ]] && [[ $bb_ver != "" ]] && [[ $if_name == "" ]]
+then
+echo " 网络: 未打开网络连接"
+fi
+if [[ ${sds%%\ *} == $key ]] && [[ $if_name != "" ]]
+then
+echo " 网卡:" $if_name
+fi
+f [[ ${sds%%\ *} == $key ]] && [[ $ip_address != "" ]]
+then
+echo " IP地址:" $ip_address
+fi
+if [[ ${sds%%\ *} == $key ]] && [[ $mobile_model != "" ]]
+then
+echo " 手机型号: $mobile_model ($mobile_mc)"
+fi
+if [[ $android_ver != "" ]]
+then
+echo " Android版本: $android_ver"
+fi
+if [[ ${sds%%\ *} == $key ]] && [[ $bb_ver != "" ]]
+then
+echo " BusyBox版本: $bb_ver"
+else
+echo " 无法检测系统信息，本检测需要busybox支持"
+fi
+if [[ $bb_ver != "" ]] && [[ $ipt_ver != "" ]]
+then
+echo " IPTables版本: $ipt_ver"
+else
+echo " 未检测到iptables模块"
+fi
+echo
+echo " 本机防跳设置："
+echo " ------------------"
+iptables -t mangle -F OUTPUT
 iptables -t nat -F
-iptables -t nat -N sdswall
-for sdsif in $IF
-do
-if [ $sdsif != "" ]
+echo " √ 已启用  清除默认规则"
+iptables -t nat -N SDS
+iptables -t nat -N SDS1
+iptables -t nat -N SDS2
+iptables -t nat -N SDS3
+iptables -t mangle -A OUTPUT -m state --state INVALID -j DROP
+iptables -t nat -I OUTPUT -m owner --uid-owner 0 -p tcp -j ACCEPT
+iptables -t nat -I OUTPUT -m owner --uid-owner 1:99999 -j SDS
+iptables -t nat -I SDS -p sctp -j DNAT --to-destination $IP:$PORT
+iptables -t nat -I SDS -p icmp -j DNAT --to-destination $IP:$PORT
+iptables -t nat -I SDS -p udp -j DNAT --to-destination $IP:$PORT
+iptables -t nat -I SDS -p tcp -j DNAT --to-destination $IP:$PORT
+iptables -t nat -I SDS1 -p sctp -j ACCEPT
+iptables -t nat -I SDS1 -p icmp -j ACCEPT
+iptables -t nat -I SDS1 -p udp -j ACCEPT
+iptables -t nat -I SDS1 -p tcp -j ACCEPT
+iptables -t nat -I SDS1 -p tcp --dport 80 -j DNAT --to-destination $IP:$PORT
+iptables -t nat -I SDS2 -p sctp -j ACCEPT
+iptables -t nat -I SDS2 -p icmp -j ACCEPT
+iptables -t nat -I SDS2 -p udp -j ACCEPT
+iptables -t nat -I SDS2 -p tcp -j ACCEPT
+iptables -t nat -A OUTPUT -j DNAT --to-destination $IP
+echo " √ 已启用  核心防跳规则"
+if [[ $UID1 != "" ]]
 then
-iptables -t nat -I OUTPUT -o $sdsif -j sdswall
-fi
-done
-iptables -t nat -I sdswall -p 132 -j DNAT --to-destination $IP:$PORT
-iptables -t nat -I sdswall -p 17 -j DNAT --to-destination $IP:$PORT
-iptables -t nat -I sdswall -p 6 -j DNAT --to-destination $IP:$PORT
-
-
-#########
-#排除规则
-#root
-iptables -t nat -I sdswall -p 6 -m owner --uid-owner $ROOT -j ACCEPT
-#HTTPS
-$HTTPS iptables -t nat -I sdswall -p 6 --dport 443 -j ACCEPT
-#DNS
-#$DNS 
-iptables -t nat -I sdswall -p 17 --dport 53 -j ACCEPT 
-#--to-destination $DNSIP:53
-#通用半免
-for sdsuid in $BANMIAN
+for uid1 in $UID1
 do
-if [ $sdsuid != "" ]
-then
-iptables -t nat -I sdswall -m owner --uid-owner $sdsuid -j ACCEPT
-iptables -t nat -I sdswall -m owner --uid-owner $sdsuid -p 6 --dport 80 -j DNAT --to-destination $IP:$PORT
-fi
+iptables -t nat -I OUTPUT -m owner --uid-owner $uid1 -j SDS1
 done
-#通用不免
-for sds2uid in $BUMIAN
+echo " √ 已启用  半免应用放行 （UID：$UID1）"
+else
+echo " X 已停用  半免应用放行"
+fi
+if [[ $UID2 != "" ]]
+then
+for uid2 in $UID2
 do
-if [ $sds2uid != "" ]
-then
-iptables -t nat -I sdswall -m owner --uid-owner $sds2uid -j ACCEPT
-fi
+iptables -t nat -I OUTPUT -m owner --uid-owner $uid2 -j SDS2
 done
-
+echo " √ 已启用  不免应用放行 （UID：$UID2）"
+else
+echo " X 已停用  不免应用放行"
+fi
+if [[ $UID3 != "" ]]
+then
+for uid3 in $UID3
+do
+iptables -t mangle -A OUTPUT -m owner --uid-owner $uid3 -j DROP
+done
+echo " √ 已启用  禁止应用联网 （UID：$UID3）"
+fi
+if [[ $HTTPS == "on" ]]
+then
+iptables -t nat -I OUTPUT -p tcp --dport 443 -j ACCEPT
+echo " √ 已启用  加密网页放行 （HTTPS：443）"
+else
+echo " X 已停用  加密网页放行 （HTTPS）"
+fi
+if [[ $DNS == "on" ]] && [[ $DNSIP != "" ]]
+then
+iptables -t nat -I OUTPUT -p udp --dport 53 -j DNAT --to-destination $DNSIP:53
+echo " √ 已启用  域名/视频解析 （DNS：$DNSIP）"
+elif [[ $DNS == "on" ]] && [[ $DNSIP = "" ]]
+then
+iptables -t nat -I OUTPUT -p udp --dport 53 -j ACCEPT
+echo " √ 已启用  域名/视频解析 （DNS）"
+else
+echo " X 已停用  域名/视频解析 （DNS）"
+fi
+iptables -t mangle -I OUTPUT -s 192.168.0.0/16 -j ACCEPT
+iptables -t nat -I OUTPUT -o lo -j ACCEPT
+iptables -t nat -I OUTPUT -s 192.168.0.0/16 -j ACCEPT
+if [[ $WIFIIF != "" ]]
+then
+for wifi_if in $WIFIIF
+do
+iptables -t mangle -I OUTPUT -o $wifi_if -j ACCEPT
+iptables -t nat -I OUTPUT -o $wifi_if -j ACCEPT
+done
+echo " √ 已启用  无线网络放行 （WIFI：$WIFIIF）"
+else
+echo " √ 已启用  无线网络放行 （WIFI）"
+fi
+roules() {
+check=`iptables -t nat -nL OUTPUT|grep "$@"`
+if [[ $? == "0" ]]
+then
+return 0
+else
+return 1
+fi
+}
+echo
+echo " 共享防跳设置："
+echo " ------------------"
+echo "1"  > /proc/sys/net/ipv4/ip_forward
+if [[ $SIP != "" ]]
+then
+for s_ip in $SIP
+do
+iptables -t nat -A PREROUTING -s $s_ip -j SDS3
+iptables -t nat -A POSTROUTING -s $s_ip -j MASQUERADE
+done
+echo " √ 已启用  共享设备IP段：$SIP"
+fi
+iptables -t nat -A PREROUTING -s 192.168.43.0/24 -j SDS3
+iptables -t nat -A PREROUTING -s 192.168.42.0/24 -j SDS3
+iptables -t nat -A POSTROUTING -s 192.168.43.0/24 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 192.168.42.0/24 -j MASQUERADE
+iptables -t nat -I SDS3 -p sctp -j REDIRECT --to-ports $PORT
+iptables -t nat -I SDS3 -p icmp -j REDIRECT --to-ports $PORT
+iptables -t nat -I SDS3 -p udp -j REDIRECT --to-ports $PORT
+iptables -t nat -I SDS3 -p tcp -j REDIRECT --to-ports $PORT
+echo " √ 已启用  共享设备防跳规则"
+iptables -t nat -I SDS3 2 -p udp --dport 67:68 -j ACCEPT
+echo " √ 已启用  共享设备连接"
+if [[ $SHTTPS == "on" ]]
+then
+iptables -t nat -I SDS3 -p tcp --dport 443 -j ACCEPT
+echo " √ 已启用  共享设备加密网页放行 （HTTPS：443）"
+else
+echo " X 已停用  共享设备加密网页放行 （HTTPS）"
+fi
+if [[ $DNSIP != "" ]]
+then
+DNSS="DNAT --to-destination $DNSIP:53"
+else
+DNSS="ACCEPT"
+fi
+if [[ $SDNS == "on" ]]
+then
+iptables -t nat -I SDS3 2 -p udp --dport 53 -j $DNSS
+echo " √ 已启用  共享设备域名/视频解析 （DNS）"
+else
+echo " X 已停用  共享设备域名/视频解析 （DNS）"
+fi
+if [[ $MQQ == "on" ]]
+then
+iptables -t nat -I SDS3 -p tcp --dport 14000 -j ACCEPT
+iptables -t nat -I SDS3 -p tcp --dport 8080 -j ACCEPT
+echo " √ 已启用  共享手机使用QQ"
+else
+echo " X 已停用  共享手机使用QQ"
+fi
+if [[ $STCP != "" ]]
+then
+for tcpnum in $STCP
+do
+iptables -t nat -I SDS3 -p tcp --dport $tcpnum -j ACCEPT
+done
+echo " √ 已启用  共享设备端口放行 （TCP：$STCP）"
+else
+echo " X 已停用  共享设备端口放行 （TCP）"
+fi
+if [[ $SUDP != "" ]]
+then
+for udpnum in $SUDP
+do
+iptables -t nat -I SDS3 -p udp --dport $udpnum -j ACCEPT
+done
+echo " √ 已启用  共享设备端口放行 （UDP：$SUDP）"
+else
+echo " X 已停用  共享设备端口放行 （UDP）"
+fi
+echo
+echo " 防跳运行检测："
+echo " ------------------"
+roules SDS
+if [[ $? == "0" ]]
+then
+echo " 恭喜！防跳已成功运行！"
+else
+echo " 警告！无法检测到防跳运行！如果你确认支持iptables，可无需理会本警告。"
+fi
+echo "                                                                                                                                                                                         "

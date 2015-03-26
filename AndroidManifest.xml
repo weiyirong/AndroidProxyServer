@@ -2,21 +2,22 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.cfun.proxy"
     android:versionCode="6"
-    android:versionName="小瓜瓜坏蛋" >
+    android:versionName="Hello" >
 
     <uses-sdk
         android:minSdkVersion="15"
         android:targetSdkVersion="21" />
 <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"></uses-permission>
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme"
-        android:name=".util.ContextUtil">
+        android:name="com.cfun.proxy.Base.BaseApplication">
         <activity
-            android:name=".MainActivity"
+            android:name="com.cfun.proxy.MainActivity"
             android:theme="@android:style/Theme.Holo.NoActionBar"
             android:launchMode="singleTask">
             <intent-filter>
@@ -26,13 +27,13 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".Setting"
+            android:name="com.cfun.proxy.Setting"
             android:label="设置"
             android:theme="@android:style/Theme.Holo.NoActionBar">
         </activity>
-        <activity android:name=".AppsList" android:theme="@android:style/Theme.Holo.NoActionBar"/>
+        <activity android:name="com.cfun.proxy.AppsList" android:theme="@android:style/Theme.Holo.NoActionBar"/>
 
-        <service android:name=".Service.ProxyService" />
+        <service android:name="com.cfun.proxy.Service.ProxyService" />
     </application>
 
 </manifest>

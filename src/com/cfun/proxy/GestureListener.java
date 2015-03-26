@@ -6,6 +6,7 @@ import android.view.GestureDetector;
 import android.view.View;
 import android.view.View.OnTouchListener;
 import android.view.MotionEvent;
+import com.cfun.proxy.Base.BaseApplication;
 import com.cfun.proxy.util.DensityUtil;
 
 /**
@@ -15,15 +16,15 @@ import com.cfun.proxy.util.DensityUtil;
  */
 public abstract class GestureListener extends SimpleOnGestureListener implements OnTouchListener {
 	/** 左右滑动的最短距离 dp*/
-	private int distance = 70;
+	private int distance = 50;
 	/** 左右滑动的最大速度 dp*/
 	private int velocity = 200;
 
 	private GestureDetector gestureDetector;
 
-	public GestureListener(Context context) {
+	public GestureListener() {
 		super();
-		gestureDetector = new GestureDetector(context, this);
+		gestureDetector = new GestureDetector(BaseApplication.getInstance(), this);
 	}
 
 	/**
@@ -47,6 +48,8 @@ public abstract class GestureListener extends SimpleOnGestureListener implements
 		// velocityX：X轴上的移动速度（像素/秒）
 		// velocityY：Y轴上的移动速度（像素/秒）
 
+		if(e1 == null || e2 == null)
+			return false;
 		// 向左滑
 		if (DensityUtil.px2dip(e1.getX() - e2.getX())> distance
 				&& DensityUtil.px2dip(Math.abs(velocityX)) > velocity) {

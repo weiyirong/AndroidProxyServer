@@ -3,7 +3,6 @@ package com.cfun.proxy;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceActivity;
-import com.cfun.proxy.proxyPreferenceFragment;
 
 public class Setting extends PreferenceActivity
 {
@@ -14,5 +13,6 @@ public class Setting extends PreferenceActivity
 		getFragmentManager().beginTransaction().replace(android.R.id.content, new proxyPreferenceFragment()).commit();
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 	}
+
 
 }
