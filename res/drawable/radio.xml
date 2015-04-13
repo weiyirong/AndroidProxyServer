@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_checked="true"
+          android:drawable="@drawable/ra_check" /><!--选中时效果-->
+    <item android:state_checked="false"
+          android:drawable="@drawable/ra_uncheck" /><!--未选中时效果-->
+    <!-- 修改成你自己的图片就可以了 -->
+    <item android:state_pressed="true" android:drawable="@drawable/ra_press">
+    </item>
+</selector>

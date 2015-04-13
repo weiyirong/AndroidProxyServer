@@ -1,8 +1,6 @@
 package com.cfun.proxy;
 
 
-import android.app.Activity;
-import android.app.ActivityManager;
 import android.content.*;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
@@ -10,76 +8,94 @@ import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.Html;
 import android.text.Spanned;
-import android.view.Gravity;
-import android.view.KeyEvent;
-import android.view.View;
-import android.view.ViewGroup;
+import android.view.*;
 import android.widget.*;
+import com.cfun.proxy.Base.BaseActivity;
+import com.cfun.proxy.Config.AppConfig;
+import com.cfun.proxy.Config.GlobleConfig;
+import com.cfun.proxy.Config.ModelConfig;
+import com.cfun.proxy.Reciver.NetworkStatuChangReciver;
 import com.cfun.proxy.Service.ProxyService;
 import com.cfun.proxy.modle.ShellResult;
-import com.cfun.proxy.util.AppFileUtil;
-import com.cfun.proxy.util.LinuxShellUtil;
+import com.cfun.proxy.util.*;
 import org.apache.commons.lang3.StringUtils;
 
-import java.io.UnsupportedEncodingException;
-import java.util.List;
+import java.io.*;
+import java.util.Properties;
 
-public class MainActivity extends Activity implements CompoundButton.OnCheckedChangeListener
+public class MainActivity extends BaseActivity implements View.OnClickListener, NetworkStatuChangReciver.OnMobileNetworkStatuChangedListener
 {
 
-	//	private String firewall = null;
 	private PopupWindow popwindow;
-	private ConnectivityManager conManager = null;
-	//	private TextView textView;
-	private RadioButton rbUnion;
-	private RadioButton rbMobile;
-	private RadioButton rbNone;
+	private NetworkStatuChangReciver reciver;
 
 	private TextView tvApn;
-
-	static final int MSG_SHOW_MSG = 0;
-	static final int MSG_HIDE_Text = 1;
-
-//	private Handler handler = new Handler()
-//	{
-//		@Override
-//		public void handleMessage(Message msg)
-//		{
-//			switch (msg.what)
-//			{
-//				case MSG_HIDE_Text:
-//					textView.setVisibility(View.GONE);
-//					break;
-//				case MSG_SHOW_MSG:
-//					removeMessages(MSG_HIDE_Text);
-//					String result =  (String)msg.obj;
-//					textView.setText(result);
-//					textView.setVisibility(View.VISIBLE);
-//					sendEmptyMessageDelayed(MSG_HIDE_Text, 20000);
-//					break;
-//			}
-//		}
-//	};
-
+	private ImageView btn_menu;
+	private TextView btStart;
+	private TextView btStop;
+	private Spinner spinner = null;
+	
+	private boolean isIllgle = false;
+	private final static String stopCmd =
+			"#!/system/bin/sh\n" +
+					"iptables -t nat -F\n" +
+					"iptables -t mangle -F\n"+
+					"iptables -t nat -X yzq\n";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		if (!isCan())
+
+		isIllgle = isCan();
+		if (!isIllgle)
 		{
 			notCan();
 			return;
 		}
+		if(GlobleConfig.configDir == null)
+		{
+			Toast.makeText(this, R.string.sdNotExists, Toast.LENGTH_SHORT).show();
+			return;
+		}
+		reciver = new NetworkStatuChangReciver();
+		reciver.setListener(this);
+		registerReceiver(reciver, new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION));
 		setContentView(R.layout.activity_main);
+		ChenJinUtil.chenJin(this, findViewById(R.id.chenJinBar), getResources().getColor(R.color.blueTop));
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
-//		textView = (TextView)findViewById(R.id.textView);
 
+		init();
+		initSpanner();
+	}
 
+	private void init()
+	{
 		findViewById(android.R.id.content).setLongClickable(true);
+		btStart = (TextView) findViewById(R.id.tv_start);
+		btStop = (TextView) findViewById(R.id.tv_stop);
+		spinner = (Spinner)findViewById(R.id.spinner);
+		tvApn = (TextView)findViewById(R.id.tv_apn);
+		btn_menu = (ImageView)findViewById(R.id.menu);
+
+		tvApn.setOnClickListener(this);
+		btStart.setOnClickListener(this);
+		btStop.setOnClickListener(this);
+
+		btn_menu.setOnClickListener(new View.OnClickListener()
+		{
+			@Override
+			public void onClick(View v)
+			{
+				showMenu();
+			}
+		});
+
+
 		findViewById(android.R.id.content).setOnTouchListener(new GestureListener()
 		{
 			@Override
@@ -87,7 +103,7 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 			{
 				//半免
 				Intent intent = new Intent(MainActivity.this, AppsList.class);
-				intent.putExtra("isNotFree", false);
+				intent.putExtra("mian", "banmian");
 				startActivity(intent);
 				overridePendingTransition(R.anim.my_trans_right_in, R.anim.my_trans_left_out);
 				return false;
@@ -98,23 +114,85 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 			{
 				//不免
 				Intent intent = new Intent(MainActivity.this, AppsList.class);
-				intent.putExtra("isNotFree", true);
+				intent.putExtra("mian", "bumian");
 				startActivity(intent);
 				overridePendingTransition(R.anim.my_trans_left_in, R.anim.my_trans_right_out);
 				return false;
 			}
 		});
+	}
 
-		rbMobile = ((RadioButton) findViewById(R.id.rb_mobile));
-		rbUnion = ((RadioButton) findViewById(R.id.rb_union));
-		rbNone = ((RadioButton) findViewById(R.id.rb_none));
-		tvApn = (TextView)findViewById(R.id.tv_apn);
+	private void initSpanner()
+	{
+		if(GlobleConfig.configDir == null)
+			return;
+		ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_dropdown_item, ModleHelper.getAllModel(new File(GlobleConfig.configDir)))
+		{
+//			@Override
+//			public View getView(int position, View convertView, ViewGroup parent)
+//			{
+//				View view = LayoutInflater.from(getContext()).inflate(R.layout.spinner_item,null);
+//				TextView label = (TextView) view.findViewById(R.id.spinner_item_label);
+//				RadioButton check = (RadioButton) view.findViewById(R.id.spinner_item_checked_image);
+//				label.setText(this.getItem(position));
+//				if (spinner.getSelectedItemPosition() == position) {
+//					view.setBackgroundColor(getResources().getColor(R.color.btn_normal));
+//					check.setChecked(true);
+//				} else {
+//					view.setBackgroundColor(getResources().getColor(R.color.btn_press));
+//					check.setChecked(false);
+//				}
+//				return view;
+//			}
+		};
+		spinner.setAdapter(arrayAdapter);
+		spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener()
+		{
+			@Override
+			public void onItemSelected(AdapterView<?> parent, View view, int position, long id)
+			{
+				SharedPreferences.Editor editor = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).edit();
+				String name = (String)parent.getAdapter().getItem(position);
+				Properties properties = ModleHelper.constructPropertiesFromPropertiesFile(new File(GlobleConfig.configDir + "/" + name + GlobleConfig.suffix));
+				if (properties == null)
+				{
+					Toast.makeText(MainActivity.this, R.string.confilgFileNotExit, Toast.LENGTH_SHORT).show();
+					return;
+				}
+				ModleHelper.writeProperties2Perference(properties);
+				editor.putString("MLModle", name);
+				editor.apply();
+			}
 
-		rbMobile.setOnCheckedChangeListener(this);
-		rbUnion.setOnCheckedChangeListener(this);
-		rbNone.setOnCheckedChangeListener(this);
+			@Override
+			public void onNothingSelected(AdapterView<?> parent)
+			{
+				SharedPreferences.Editor editor = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).edit();
+				editor.putString("MLModle", "");
+				editor.apply();
+			}
+		});
+	}
 
-		conManager = (ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE);
+	@Override
+	protected void onStart()
+	{
+		super.onStart();
+		if (!isIllgle)
+			return;
+		onNetworkConnection(((ConnectivityManager) this.getSystemService(Context.CONNECTIVITY_SERVICE)).getNetworkInfo(ConnectivityManager.TYPE_MOBILE));
+		Spinner spinner = (Spinner)findViewById(R.id.spinner);
+		String sp = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).getString("MLModle", "");
+		int count =  spinner.getAdapter().getCount();
+		if(!sp.isEmpty())
+		for(int i =0; i<count; i++)
+		{
+			if(spinner.getAdapter().getItem(i).equals(sp))
+			{
+				spinner.setSelection(i);
+				break;
+			}
+		}
 	}
 
 	@Override
@@ -124,15 +202,7 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 		{
 			case KeyEvent.KEYCODE_MENU:
 			{
-				if (popwindow == null)
-				{
-					View v = getLayoutInflater().inflate(R.layout.menu, null);
-					popwindow = new PopupWindow(v, LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, true);
-					popwindow.setBackgroundDrawable(new ColorDrawable());
-					popwindow.setOutsideTouchable(true);
-					popwindow.setAnimationStyle(R.anim.my_trans_bottom_in);
-				}
-				popwindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER | Gravity.BOTTOM, 0, 10);
+				showMenu();
 				return true;
 			}
 			case KeyEvent.KEYCODE_BACK:
@@ -147,17 +217,49 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 		}
 
 	}
-
-	public void onSetting(View v)
+	public void  showMenu()
 	{
-		overridePendingTransition(R.anim.my_trans_bottom_in, R.anim.my_trans_top_out);
-		startActivity(new Intent(this, Setting.class));
+		if (!isIllgle)
+			return;
+		if (popwindow == null)
+		{
+			View v = getLayoutInflater().inflate(R.layout.menu, null);
+			popwindow = new PopupWindow(v, LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT, true);
+			popwindow.setBackgroundDrawable(new ColorDrawable());
+			popwindow.setOutsideTouchable(true);
+			popwindow.setAnimationStyle(R.style.popwin_anim_style);
+		}
+		popwindow.showAsDropDown(btn_menu, -110, 5);
+	}
+
+	public void onAppSetting(View v)
+	{
 		popwindow.dismiss();
+		Bundle bundle = new Bundle();
+		bundle.putInt("what", proxyPreferenceFragment.SetAppConfig);
+		Intent intent = new Intent(this, Setting.class);
+		intent.putExtras(bundle);
+		startActivity(intent);
+		overridePendingTransition(R.anim.my_trans_right_in, R.anim.my_trans_left_out);
+
+	}
+	public void onModelSetting(View v)
+	{
+		popwindow.dismiss();
+		if(spinner.getSelectedItem() == null)
+			return;
+		Bundle bundle = new Bundle();
+		bundle.putInt("what", proxyPreferenceFragment.SetModelConfig);
+		bundle.putString("modleName", spinner.getSelectedItem().toString());
+		Intent intent = new Intent(this, Setting.class);
+		intent.putExtras(bundle);
+		startActivity(intent);
+		overridePendingTransition(R.anim.my_trans_right_in, R.anim.my_trans_left_out);
 	}
 
 	public void onAbout(View v)
 	{
-		Toast.makeText(this, "自强制作 ^_^", Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, R.string.about, Toast.LENGTH_SHORT).show();
 		popwindow.dismiss();
 	}
 
@@ -166,64 +268,63 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 	{
 		try
 		{
-			Config.refresh(this);
+			AppConfig.refresh(this);
+			ModelConfig.refresh(this);
 		} catch (UnsupportedEncodingException e)
 		{
-			Toast.makeText(this, "配置文件读取失败", Toast.LENGTH_SHORT).show();
+			Toast.makeText(this, R.string.configFileReadError, Toast.LENGTH_SHORT).show();
+			return;
 		}
-		startService(new Intent(getBaseContext(), ProxyService.class));
+		Intent intent = new Intent(getBaseContext(), ProxyService.class);
+//		Bundle bundle = new Bundle();
+//		bundle.putSerializable("config", new ModelConfig());
+//		intent.putExtras(bundle);
+		startService(intent);
 		(v).setEnabled(false);
-		String search[] = {"[banmian]", "[bumian]", "[gprs_interface]", "[shared_interface]", "[uid]"};
+		String search[] = {"[banmian]", "[bumian]", "[gprs_interface]", "[shared_interface]", "[uid]", "[qquid]", "[isHttps]"};
 		String uid = String.valueOf(getApplication().getApplicationInfo().uid);
+		String bumian = AppConfig.bumian;
+		String banmian = AppConfig.banmian;
+		String gprs_interface = AppConfig.gprs_interface;
+		String shared_interface = AppConfig.shared_interface;
+		String qquid = AppHelper.getQQUid();
+		String isHttps = ModelConfig.isHttps ? "#" : "";
 
-//		String bumian = uid + ((Config.bumian == null || Config.bumian.isEmpty()) ? "" : (" "+Config.bumian));
-		String bumian = Config.bumian;
-		String banmian = Config.banmian;
-		String gprs_interface = Config.gprs_interface;
-		String shared_interface = Config.shared_interface;
-
-		String replace[] = {banmian, bumian, gprs_interface, shared_interface, uid};
-//		String replace[] = {banmian,bumian};
-		String cmd = StringUtils.replaceEach(startCmd, search, replace);
+		String replace[] = {banmian, bumian, gprs_interface, shared_interface, uid, qquid, isHttps};
+		String cmd = StringUtils.replaceEach(getWall(), search, replace);
 		AppFileUtil.writeFile("ft.sh", cmd, false);
 		ShellResult result = LinuxShellUtil.execShell(AppFileUtil.getFullPath("ft.sh"));
-//		postMassage(result.getExitStatu() !=0?"命令执行失败": result.getOutput());
-		Toast.makeText(this, result.getExitStatu() == 0 ? "命令执行完毕" : "命令执行失败", Toast.LENGTH_SHORT).show();
+		Toast.makeText(this, result.getExitStatu() == 0 ? R.string.cmdFinish : R.string.cmdFail, Toast.LENGTH_SHORT).show();
 	}
 
 	public void onStopService(View v)
 	{
 		stopService(new Intent(getBaseContext(), ProxyService.class));
-		(findViewById(R.id.btnStartService)).setEnabled(true);
-//		String cmd="#!/system/bin/sh\niptables -t nat -F\niptables -t nat -X sdswall\niptables -t nat -A POSTROUTING -j MASQUERADE\n";
+		(findViewById(R.id.tv_start)).setEnabled(true);
 
-		LinuxShellUtil.execShellCmd(stopCmd);
-		Toast.makeText(this, "命令执行完毕", Toast.LENGTH_SHORT).show();
+		ShellResult result =  LinuxShellUtil.execShellCmd(stopCmd);
+		Toast.makeText(this, result.getExitStatu() == 0 ? R.string.cmdFinish : R.string.cmdFail, Toast.LENGTH_SHORT).show();
+	}
+	public String getWall()
+	{
+		try
+		{
+			BufferedReader br = new BufferedReader(new InputStreamReader(getAssets().open("wall.sh")));
+			String line = br.readLine();
+			StringBuilder sb = new StringBuilder();
+			while (line!=null)
+			{
+				sb.append(line);
+				sb.append("\n");
+				line = br.readLine();
+			}
+			br.close();
+			return sb.toString();
+		} catch (IOException e)
+		{}
+		return null;
 	}
 
-//	private void postMassage(String msg)
-//	{
-//		Message message = handler.obtainMessage(MSG_SHOW_MSG);
-//		message.obj = msg;
-//		message.sendToTarget();
-//	}
-
-
-//	public void btnNotFree(View v)
-//	{
-//		Intent intent = new Intent(this, AppsList.class);
-//		intent.putExtra("isNotFree", true);
-//		startActivity(intent);
-//		overridePendingTransition(R.anim.my_trans_left_in, R.anim.my_trans_right_out);
-//	}
-//
-//	public void btnNotAllFree(View v)
-//	{
-//		Intent intent = new Intent(this, AppsList.class);
-//		intent.putExtra("isNotFree", false);
-//		startActivity(intent);
-//		overridePendingTransition(R.anim.my_trans_right_in, R.anim.my_trans_left_out);
-//	}
 
 
 	public boolean isCan()
@@ -232,31 +333,19 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 		{
 			TelephonyManager mTelephonyMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 			String imsi = mTelephonyMgr.getSubscriberId();
-			String imei = mTelephonyMgr.getDeviceId();
-			String[] imei1= {
-					"862187026406621",
-					"862136025677856",
-					"863010025379285",//张文艳
-					"863654023434079"//方国界
-			};
-			String[] imsi1= {
-					"460008436206407",
-					"460015821405798",
-					"460077388497638",//张文艳
-					"460021202633546"//方国界
-			};
-//			String[] imei1 = null;
-//			String[] imsi1 = null;
-			if (imei1 != null)
-				for (String str : imei1)
+
+			String[] md5s= getResources().getStringArray(R.array.permit_device);
+
+			if (md5s != null)
+			{
+				String mdd =  MD5Util.MD5(imsi+"1717234");
+				for (String str : md5s)
 				{
-					if (imei.equals(str)) return true;
+					if (mdd.equals(str))
+						return true;
 				}
-			if (imsi1 != null)
-				for (String str : imsi1)
-				{
-					if (imsi.equals(str)) return true;
-				}
+			}
+
 		} catch (Exception e)
 		{
 			return false;
@@ -266,9 +355,10 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 
 	private void notCan()
 	{
+		findViewById(android.R.id.content).setBackgroundColor(Color.parseColor("#000000"));
 		TextView textView = new TextView(this);
 		textView.setTextSize(20);
-		Spanned spanned =Html.fromHtml("专机专用，请勿拷贝" + "<br><font color=\"#00CCFF\"><u>Click Me</u><font>");
+		Spanned spanned =Html.fromHtml(getString(R.string.waring));
 		textView.setText(spanned);
 		textView.setTextColor(Color.WHITE);
 		FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -282,233 +372,89 @@ public class MainActivity extends Activity implements CompoundButton.OnCheckedCh
 			{
 				TelephonyManager mTelephonyMgr = (TelephonyManager) getSystemService(Context.TELEPHONY_SERVICE);
 				String imsi = mTelephonyMgr.getSubscriberId();
-				String imei = mTelephonyMgr.getDeviceId();
 				ClipboardManager clipboardManager = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
-				clipboardManager.setPrimaryClip(ClipData.newPlainText(null, "S:" + imsi + "\nE:" + imei));
-				Toast.makeText(MainActivity.this, "信息已复制，请发给作者", Toast.LENGTH_SHORT).show();
+				clipboardManager.setPrimaryClip(ClipData.newPlainText(null, "F:" + MD5Util.MD5(imsi + "1717234")));
+				Toast.makeText(MainActivity.this, R.string.massageAreadyCopy, Toast.LENGTH_SHORT).show();
 			}
 		});
 	}
 
-	/**
-	 * 用来判断服务是否运行.
-	 *
-	 * @param className 判断的服务名字
-	 * @return true 在运行 false 不在运行
-	 */
-	public static boolean isServiceRunning(Context mContext, String className)
-	{
-		boolean isRunning = false;
-		ActivityManager activityManager = (ActivityManager) mContext
-				.getSystemService(Context.ACTIVITY_SERVICE);
-		List<ActivityManager.RunningServiceInfo> serviceList = activityManager
-				.getRunningServices(800);
-
-		for (ActivityManager.RunningServiceInfo s : serviceList)
-		{
-			if (s.service.getClassName().equals(className))
-			{
-				isRunning = true;
-				break;
-			}
-		}
-		return isRunning;
-	}
 
 	@Override
 	protected void onResume()
 	{
 		super.onResume();
-		if (isServiceRunning(this, "com.cfun.proxy.Service.ProxyService"))
+		if (!isIllgle)
+			return;
+		new Thread()
 		{
-			((Button) findViewById(R.id.btnStartService)).setEnabled(false);
-//			Toast.makeText(this, "代理服务正在后台运行", Toast.LENGTH_SHORT).show();
-		}
-		SharedPreferences pres = this.getSharedPreferences(Config.app_PerferenceName, android.content.Context.MODE_PRIVATE);
-		String SP = pres.getString("SP", "none");
-		if (rbUnion != null)
-			rbUnion.setChecked(SP.equals("union"));
-		if (rbMobile != null)
-			rbMobile.setChecked(SP.equals("mobile"));
-		if (rbNone != null)
-			rbNone.setChecked(SP.equals("none"));
-
-	if(tvApn !=null)
-	{
-		NetworkInfo ni = conManager.getActiveNetworkInfo();
-		if(ni !=null)
-		{
-			String apn = ni.getExtraInfo();
-			tvApn.setText("APN:"+apn);
-		}
-		else
-		{
-			tvApn.setText(null);
-		}
-	}
+			@Override
+			public void run()
+			{
+				if(AppHelper.isServiceRunning(ProxyService.class.getName()))
+				{
+					MainActivity.this.runOnUiThread(new Runnable()
+					{
+						@Override
+						public void run()
+						{
+							View v = findViewById(R.id.tv_start);
+							if(v != null)
+								v.setEnabled(false);
+						}
+					});
+				}
+			}
+		}.start();
 
 	}
-
-
-	private final static String startCmd = "\uFEFF#!/system/bin/sh\n" +
-			"\n" +
-			"#网卡名称\n" +
-			"IF_NAME=\"[gprs_interface]\"\n" +
-			"\n" +
-			"#WIFI和usb共享网卡\n" +
-			"S_IF=([shared_interface])\n" +
-			"\n" +
-			"#半免UID\n" +
-			"UID=([banmian])\n" +
-			"\n" +
-			"#完全排除，目前我完全排除的只有支付宝，或许银行的app也要完全排除\n" +
-			"UID2=([bumian])\n" +
-			"\n" +
-			"#将10081修改为你的almp的UID，其它软件用改为0\n" +
-			"GID=\"[uid]\"\n" +
-			"\n" +
-			"#全局代理IP\n" +
-			"IP=\"127.0.0.1\"\n" +
-			"\n" +
-			"#代理端口\n" +
-			"PORT=\"10080\"\n" +
-			"\n" +
-			"\n" +
-			"#链名\n" +
-			"CName=\"sdswall\"\n" +
-			"\n" +
-			"#################################\n" +
-			"#此部分切勿修改，否则后果自负！\n" +
-			"\n" +
-			"iptables -t nat -F\n" +
-			"iptables -t mangle -F\n" +
-			"iptables -t nat -N $CName\n" +
-			"iptables -t nat -I OUTPUT -o $IF_NAME -j $CName \n" +
-			"\n" +
-			"\n" +
-			"#防跳,新旧iptables写法不同，都写了。\n" +
-			"iptables -t mangle -I PREROUTING -i $IF_NAME ! -p icmp -m state --state RELATED,INVALID -j DROP\n" +
-			"iptables -t mangle -I PREROUTING -i $IF_NAME -p ! icmp -m state --state RELATED,INVALID -j DROP\n" +
-			"\n" +
-			"\n" +
-			"iptables -t nat -I $CName -p udp -j DNAT --to-destination $IP:$PORT\n" +
-			"iptables -t nat -I $CName -p tcp -j DNAT --to-destination $IP:$PORT\n" +
-			"iptables -t nat -I $CName -p sctp -j DNAT --to-destination $IP:$PORT\n" +
-			"\n" +
-			"\n" +
-			"#排除HTTPS协议，默认启用\n" +
-			"iptables -t nat -I $CName -p tcp --dport 443 -j ACCEPT\n" +
-			"\n" +
-			"\n" +
-			"###########\n" +
-			"\n" +
-			"#半免UID\n" +
-			"\n" +
-			"for uid in ${UID[@]};\n" +
-			"do\n" +
-			"if [ $uid ];then\n" +
-			"iptables -t nat -I $CName -m owner --uid-owner $uid -j ACCEPT\n" +
-			"fi\n" +
-			"done\n" +
-			"\n" +
-			"############\n" +
-			"#重定向HTTP\n" +
-			"iptables -t nat -I $CName -p tcp --dport 80 -j  DNAT --to-destination  $IP:$PORT\n" +
-			"\n" +
-			"#排除免流程序\n" +
-			"iptables -t nat -I $CName -p tcp -m owner --uid-owner $GID  -j ACCEPT\n" +
-			"\n" +
-			"#不免\n" +
-			"for uid2 in ${UID2[@]};\n" +
-			"do\n" +
-			"if [ $uid2 ];then\n" +
-			"iptables -t nat -I $CName -p tcp -m owner --uid-owner $uid2 -j ACCEPT\n" +
-			"fi\n" +
-			"done\n" +
-			"\n" +
-			"#share\n" +
-			"iptables -t nat -I POSTROUTING -o $IF_NAME -s 192.168.43.0/24 -j MASQUERADE\n" +
-			"iptables -t nat -I POSTROUTING -o $IF_NAME -s 192.168.42.0/24 -j MASQUERADE\n" +
-			"\n" +
-			"for ifname in ${S_IF[@]};\n" +
-			"do\n" +
-			"if [ $ifname ];then\n" +
-			"iptables -t nat -I PREROUTING -i $ifname -s 192.168.43.0/24 -p tcp --dport 80 -j  DNAT --to-destination  $IP:$PORT\n" +
-			"iptables -t nat -I PREROUTING -i $ifname -s 192.168.42.0/24 -p tcp --dport 80 -j  DNAT --to-destination  $IP:$PORT\n" +
-			"fi\n" +
-			"done\n" +
-			"\n" +
-			"iptables -t nat -I $CName -p tcp --dport 53 -j  ACCEPT\n" +
-			"\n" +
-			"\n" +
-			"#iptables -I INPUT ! -p icmp -m string --string \"广告\" --algo bm -j DROP\n" +
-			"\n" +
-			"#必须开启转发功能!\n" +
-			"echo \"1\"  > /proc/sys/net/ipv4/ip_forward \n";
-	private final static String stopCmd =
-			"#!/system/bin/sh\n" +
-					"# 清除所有规则\n" +
-					"iptables -t nat -F\n" +
-					"iptables -t nat -X sdswall\n";
 
 	@Override
-	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
+	protected void onDestroy()
 	{
-		if (!isChecked)
+		super.onDestroy();
+		if (!isIllgle)
 			return;
-		SharedPreferences pres = this.getSharedPreferences(Config.app_PerferenceName, android.content.Context.MODE_PRIVATE);
-		SharedPreferences.Editor editor = pres.edit();
-
-		if (buttonView.getId() == R.id.rb_mobile)
-		{
-//			editor.putBoolean("isProxyServer", true);
-//			editor.putBoolean("isBeforeURL", false);
-//			editor.putBoolean("isReplaceHost", false);
-//			editor.putBoolean("isDisguiseMMS", false);
-//			editor.putBoolean("isReplaceXOnlineHost", true);
-//			editor.putBoolean("isCustom", false);
-//			editor.putBoolean("isReplaceConnection", false);
-
-			editor.putString("proxyServer", "183.224.1.30:80");
-			editor.putString("beforeURL", "");
-			editor.putString("firstLinePattern", "[M] http://wap.ha.10086.cn[U] [V]");
-			editor.putString("replaceHost", "Host: [H]");
-			editor.putString("replaceXOnlineHost", "");
-			editor.putString("custom", "");
-			editor.putString("replaceConnection", "");
-
-			editor.putString("proxyServer", "220.181.32.106:80");
-			editor.putString("beforeURL", "");
-			editor.putString("firstLinePattern", "[M] http://wap.gz.10086.cn[U] [V]");
-			editor.putString("replaceHost", "Host: [H]");
-			editor.putString("replaceXOnlineHost", "");
-			editor.putString("custom", "");
-			editor.putString("replaceConnection", "");
-
-			editor.putString("SP", "mobile");
-		} else if (buttonView.getId() == R.id.rb_union)
-		{
-			editor.putBoolean("isProxyServer", true);
-			editor.putBoolean("isBeforeURL", false);
-			editor.putBoolean("isReplaceHost", true);
-			editor.putBoolean("isDisguiseMMS", false);
-			editor.putBoolean("isReplaceXOnlineHost", true);
-			editor.putBoolean("isCustom", false);
-			editor.putBoolean("isReplaceConnection", false);
-
-			editor.putString("proxyServer", "10.0.0.172:80");
-			editor.putString("beforeURL", "");
-			editor.putString("firstLinePattern", "[M] http://[HP][U][S]m.client.10010.com [V]");
-			editor.putString("replaceHost", "Host: m.client.10010.com");
-			editor.putString("replaceXOnlineHost", "");
-			editor.putString("custom", "");
-			editor.putString("replaceConnection", "");
-
-			editor.putString("SP", "union");
-		} else if (buttonView.getId() == R.id.rb_none)
-		{
-			editor.putString("SP", "none");
-		}
-		editor.commit();
+		unregisterReceiver(reciver);
 	}
+
+
+	@Override
+	public void onClick(View v)
+	{
+		if(tvApn!=null && v.getId() == tvApn.getId())
+		{
+			Intent intent = new Intent(Settings.ACTION_APN_SETTINGS);
+			startActivity(intent);
+			overridePendingTransition(R.anim.my_trans_left_in, R.anim.my_trans_right_out);
+		}
+		else if(btStop!= null && v.getId() == btStop.getId())
+		{
+			onStopService(v);
+		}
+		else if(btStart != null && v.getId() == btStart.getId())
+		{
+			onStartService(v);
+		}
+		else if(v.getId() == btn_menu.getId())
+		{
+			showMenu();
+		}
+	}
+
+	@Override
+	public void onNetworkConnection(NetworkInfo info)
+	{
+		if(tvApn !=null)
+		{
+			String apn = getString(R.string.unKnow);
+			if(info !=null)
+			{
+				apn = info.getExtraInfo();
+			}
+			tvApn.setText("APN:" + apn);
+		}
+	}
+
+
 }

@@ -8,19 +8,19 @@
               android:layout_width="match_parent"
               android:layout_height="match_parent"
              android:background="@drawable/bg">
+    <View android:layout_height="0dp" android:layout_width="match_parent" android:layout_alignParentTop="true" android:id="@+id/chenJinBar" android:visibility="gone"></View>
 
     <LinearLayout
             android:orientation="horizontal"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignParentTop="true"
-            android:id="@+id/app_list_linerlayout_title">
+            android:layout_height="35dp"
+            android:layout_below="@id/chenJinBar"
+            android:id="@+id/app_list_linerlayout_title" android:gravity="center" android:background="@color/blueTop">
         <TextView android:layout_width="fill_parent" android:layout_height="wrap_content"
                 android:text="标题"
                 android:id="@+id/app_list_title"
                 android:textSize="20sp"
-                android:layout_margin="5dp"
-                android:gravity="center"/>
+                  android:gravity="center" android:textColor="#ff292a2f"/>
     </LinearLayout>
     <LinearLayout
             android:orientation="vertical"

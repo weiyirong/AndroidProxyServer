@@ -1,33 +1,29 @@
 package com.proxyServer.SocketIO;
 
 import java.io.*;
-import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
-import java.util.Locale;
 
-import com.foundationdb.tuple.ByteArrayUtil;
+import com.cfun.proxy.Config.ModelConfig;
+//import com.foundationdb.tuple.ByteArrayUtil;
+//import com.foundationdb.tuple.ByteArrayUtil;
+import com.cfun.proxy.util.ByteArrayUtil;
 import com.proxyServer.Exception.*;
-import com.cfun.proxy.Config;
 import com.proxyServer.HttpProxy.HttpConnection;
 import org.apache.http.util.ByteArrayBuffer;
 
-import static org.apache.commons.lang3.StringUtils.*;
 
 
 public class Client2Proxy
 {
 	/*
 	* [M] http请求方法
-	* [H] http请求的HOST
-	* [P] http请求的接口
-	* [HP] http请求的协议加接口，若接口为只有Host
+	* [H] http请求的HOST或Port
 	* [U] http协议请求的URI
 	* [V] http协议请求的http协议版本
 	* [S] 聪明的后缀符号，根据情况，可能是?也可能是&
-	* [RN] 代表了CLCR,其实表示的是\r\n
 	* */
-	private static String[] searchList = {"[M]","[H]","[P]","[HP]","[V]","[S]","[U]"}; //模式匹配时的查找字符串
+//	private static String[] searchList = {"[M]","[H]","[P]","[HP]","[V]","[S]","[U]"}; //模式匹配时的查找字符串
 	private HttpConnection conn= null;
 	private HttpFirstLine hfl = null;
 	private String OldHost="";
@@ -65,7 +61,6 @@ public class Client2Proxy
 				}
 				else
 				{
-
 					if(hfl.Host.isEmpty())
 					{
 						//HOST域为空，则将读取到的数据放入buffer中，待发现Host域后重新进行写入操作
@@ -85,14 +80,18 @@ public class Client2Proxy
 					}
 					writeBody();
 					oStream.flush();
-					if(conn.isC2SCanClose())
-						break;
+//					if(conn.isC2SCanClose())
+//						break;
 				}
 			}
 
 		}
-		catch(Exception e)
+		catch (Exception e)
 		{
+		}
+		finally
+		{
+			conn.closeC2S();
 		}
 	}
 
@@ -102,15 +101,11 @@ public class Client2Proxy
 	 * @throws IOException
 	 * @throws FirstLineFormatErrorExpection
 	 */
-	protected boolean analyseFirstLine() throws HttpMethodNotSupportExpection, IOException, FirstLineFormatErrorExpection
+	protected boolean analyseFirstLine() throws IOException, FirstLineFormatErrorExpection
 	{
-		ByteArrayBuffer b = getToChar('\n',false);
+		ByteArrayBuffer b = getToChar('\n');
 		if(b.length()==0) throw new ClientReadFirstLineExpection(null);
-//		String method = firstLineString.substring(0, 7);
-		//判断方法是否被支持
-//		if(!isSupport(method)) throw new HttpMethodNotSupportExpection("ReadCount:"+(ReadTimes++));
-		//解析第一行数据
-		hfl =new  HttpFirstLine(new String(b.buffer(),0,b.length()));
+		hfl =new  HttpFirstLine(new String(b.buffer(),0,b.length()-2));
 		//设置HttpConnection的Server连接
 		try
 		{
@@ -127,19 +122,9 @@ public class Client2Proxy
 
 	protected void writeFirstLine() throws IOException
 	{
-		//是否在Http请求前插入数据
-		if(Config.isBeforeURL)
-		{
-
-			oStream.write(ByteArrays.get_http);
-			oStream.write(Config.beforeURL);
-			oStream.write(ByteArrays.http_hou);
-
-			oStream.write(ByteArrays.CLCR);
-		}
 		//真正的写入第一行数据
-		oStream.write(patternMatching(Config.firstLinePattern, hfl));
-		oStream.write(ByteArrays.CLCR);
+//		oStream.write(patternMatching(hfl));
+		patternMatching(oStream, hfl);
 
 	}
 	protected void writToBF(byte[] b)
@@ -147,47 +132,50 @@ public class Client2Proxy
 		bf.append(b,0,b.length);
 	}
 
-	protected byte[] patternMatching(String str,HttpFirstLine hf) throws UnsupportedEncodingException
+	protected void patternMatching(OutputStream out,  HttpFirstLine hf) throws IOException
 	{
-
-//		patternStringBuilder.setLength(0);//清空
-		String[] replaceList = {hfl.Method, hfl.Host, String.valueOf(hfl.Port), (hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port), hfl.Version, hf.Uri.indexOf('?')>0?"&":"?", hfl.Uri};
-		// {"[M]","[H]","[P]","[HP]","[V]","[S]","[RN]","[U]"}
-		String insert = replaceEach(str, searchList, replaceList);
-//		patternStringBuilder.append(insert);
-//		int index = insert.indexOf("URLEncode(");
-//		int index2 = insert.indexOf(')');
-//		if(index>-1 && index2>=index+10)
-//		{
-//			patternStringBuilder
-//				.append(insert.substring(0, index))
-//				.append(URLEncoder.encode(insert.substring(index+10,index2),"UTF-8"))，，，，，，，，
-//				.append(insert.substring(index2+1));
-//
-//		}
-		return insert.getBytes("iso8859-1");
+		for(int i=0; i<ModelConfig.firstLineReplaceArray.length; i++)
+		{
+			out.write(ModelConfig.firstLineOutArray[i]);
+			switch (ModelConfig.firstLineReplaceArray[i])
+			{
+				case 'M':
+					out.write(hfl.Method.getBytes("iso8859-1"));
+					break;
+				case 'H':
+					out.write(hfl.HP);
+					break;
+				case 'V':
+					out.write(hfl.Version.getBytes("iso8859-1"));
+					break;
+				case 'S':
+					out.write((hf.Uri.indexOf('?')>0?"&":"?").getBytes("iso8859-1"));
+					break;
+				case 'U':
+					out.write(hfl.Uri.getBytes("iso8859-1"));
+					break;
+			}
+		}
+		if(ModelConfig.firstLineReplaceArray.length < ModelConfig.firstLineOutArray.length)
+			out.write(ModelConfig.firstLineOutArray[ModelConfig.firstLineReplaceArray.length]);
+//		String[] replaceList = {hfl.Method, hfl.Host, String.valueOf(hfl.Port), (hfl.Port==80?hfl.Host:hfl.Host+":"+hfl.Port), hfl.Version, hf.Uri.indexOf('?')>0?"&":"?", hfl.Uri};
+//		String insert = replaceEach(str, searchList, replaceList);
+//		return insert.getBytes("iso8859-1");
 	}
 
 	protected void analyseAndWriteHeadWhenHostNotFound() throws IOException, ServerNotConnectedExecption, HostNotFoundExpection
 	{
 		content_length= 0;
 
-		if(Config.isCustom)
-		{//要插入自定义信息
-			writToBF(patternMatching(Config.custom, hfl));
-			writToBF(ByteArrays.CLCR);
-		}
-		boolean readEmptyLineFirst = false;
-		for(ByteArrayBuffer line= getToChar(':',false); line.length() > 2; line= getToChar(':',readEmptyLineFirst))
+//		boolean readEmptyLineFirst = false;
+		for(ByteArrayBuffer line= getToChar(':'); line.length() > 2; line= getToChar(':'))
 		{
-			readEmptyLineFirst = true;
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
 //				if(noHost) 一定无Host字段
 //				{
 					//尚未发现主机，现在刚发现，故要对远程主机进行连接，并且修改noHost
-					ByteArrayBuffer HP_Byte = getToChar('\n',false);//获取行的后半部分
-					readEmptyLineFirst = false;
+					ByteArrayBuffer HP_Byte = getToChar('\n');//获取行的后半部分
 					String HP = new String(HP_Byte.buffer(),1,HP_Byte.length()-3);
 					int index = HP.indexOf(":");
 					if(index>0)
@@ -203,21 +191,12 @@ public class Client2Proxy
 						hfl.HP   = HP.getBytes("iso8859-1");
 					}
 					ConnectToServer();
-					if(conn.isConnectToServer())
-						throw  new ServerNotConnectedExecption();
-//				}
 				//HOST已经找到，此时可以直接向输入流中写入数据
 				{
 					//直接写入第一行数据进输出流
 					writeFirstLine();
 				}
-				if(Config.isReplaceHost)
-				{
-					byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
-					writToBF(b);
-					writToBF(ByteArrays.CLCR);
-				}
-				else
+				if(!ModelConfig.isContainHost) //要删除的头域中不包含Host
 				{
 					//写入原Host
 					writToBF(ByteArrays.Host_Full);//(Host:) 写前半部分
@@ -228,122 +207,74 @@ public class Client2Proxy
 				bf.setLength(0);
 				continue;
 			}
-			if(Config.isDisguiseMMS &&
-					(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept)||
-					ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type)))
+			if(isContainStr(line.buffer()))
 			{
+				emptyReadToLineEnd();
 				continue;
 			}
-
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Length))
 			{
 				bf.append(line.buffer(), 0, line.length());//先写头部 因为Tail和Line其实指向的是同一对象
 
-				ByteArrayBuffer tail = getToChar('\n',false);
-				readEmptyLineFirst = false;
+				ByteArrayBuffer tail = getToChar('\n');
 				content_length= Integer.parseInt(new String(tail.buffer(),1,tail.length()-3));
 				//写入contentLength
 
 				bf.append(tail.buffer(), 0, tail.length());//写入尾部
 				continue;
 			}
-			if(Config.isReplaceConnection && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Connection))
-			{
-				writToBF(ByteArrays.Connection);
-				writToBF(Config.replaceConnection);
-				writToBF(ByteArrays.CLCR);
-				continue;
-			}
-			if(Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
-			{
-				continue;
-			}
 			bf.append(line.buffer(), 0, line.length());//写头部
 			write2BufferToLineEnd(bf);//写尾部
-			readEmptyLineFirst = false;
 		}
 		oStream.write(bf.buffer(), 0, bf.length());
-		//伪装彩信
-		if(Config.isDisguiseMMS)oStream.write(ByteArrays.MMS);
-		if(Config.isReplaceXOnlineHost && Config.replaceXOnlineHost.length!=0)
-		{//要替换或强插XOnlineHost 且不为空时才插入
-			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,hfl.HP);
-			oStream.write(b);
-			oStream.write(ByteArrays.CLCR);
-		}
 		oStream.write(ByteArrays.CLCR);
 	}
 	protected void analyseAndWriteHeadNormal() throws IOException, ServerNotConnectedExecption, HostNotFoundExpection
 	{
 		content_length= 0;
 
-		if(Config.isCustom)
-		{//要插入自定义信息
-			oStream.write(patternMatching(Config.custom, hfl));
-			oStream.write(ByteArrays.CLCR);
-		}
-		boolean readEmptyLineFirst = false;
-		for(ByteArrayBuffer line= getToChar(':',false); line.length() > 2; line= getToChar(':',readEmptyLineFirst))
+//		boolean readEmptyLineFirst = false;//是否先空读一行
+		for(ByteArrayBuffer line= getToChar(':'); line.length() > 2; line= getToChar(':'))
 		{
-//			String aaaa = new String(line.buffer(),0,line.length());
-			readEmptyLineFirst = true;
-			if(Config.isReplaceHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
-			{
-				byte[] b = ByteArrayUtil.replace(Config.replaceHost,ByteArrays.H,hfl.HP);
-				oStream.write(b);
-				oStream.write(ByteArrays.CLCR);
-				continue;
-			}
-			if(Config.isDisguiseMMS && (ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Accept)
-					||
-					ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Content_Type)))
-			{
-				continue;
-			}
+
 			if(ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Content_Length))
 			{
 				oStream.write(line.buffer(), 0, line.length());//先写头部 因为Tail和Line其实指向的是同一对象
 
-				ByteArrayBuffer tail = getToChar('\n',false);
-				readEmptyLineFirst = false;
+				ByteArrayBuffer tail = getToChar('\n');
 				content_length= Integer.parseInt(new String(tail.buffer(),1,tail.length()-3));
 				//写入contentLength
 
 				oStream.write(tail.buffer(), 0, tail.length());//写入尾部
 				continue;
 			}
-			if(Config.isReplaceConnection && ByteArrayUtil.startsWith(line.buffer(),ByteArrays.Connection))
-			{
-				oStream.write(ByteArrays.Connection);
-				oStream.write(Config.replaceConnection);
-				oStream.write(ByteArrays.CLCR);
-				continue;
-			}
-			if(Config.isReplaceXOnlineHost && ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
-			{
+			if(isContainStr(line.buffer()))//要删除的Http请求头字段
+			{//要进行空读
+				emptyReadToLineEnd();
 				continue;
 			}
 			oStream.write(line.buffer(),0,line.length());//写入头部
 			write2OstreamToLineEnd();//写入尾部
-			readEmptyLineFirst = false;
-		}
-		//彩信伪装
-		if(Config.isDisguiseMMS)oStream.write(ByteArrays.MMS);
-		//X-Online-Host设定
-		if(Config.isReplaceXOnlineHost && Config.replaceXOnlineHost.length>1)
-		{//要替换或强插XOnlineHost 且不为空时才插入
-			byte[] b = ByteArrayUtil.replace(Config.replaceXOnlineHost,ByteArrays.X,hfl.HP);
-			oStream.write(b);
-			oStream.write(ByteArrays.CLCR);
 		}
 		oStream.write(ByteArrays.CLCR);
 	}
 
+	private boolean isContainStr(byte[] str)
+	{
+		for (byte[] temp : ModelConfig.deleteHeads)
+		{
+			if(ByteArrayUtil.startsWith(str, temp))
+				return true;
+		}
+		return false;
+	}
+
 	protected void writeBody() throws IOException
 	{
-		while(content_length > 0)
+		int len = 1;
+		while(content_length > 0 && len >0)
 		{
-			int len= iStream.read(buffer, 0, content_length);
+			len= iStream.read(buffer, 0, content_length);
 			content_length-= len;
 			oStream.write(buffer,0,len);
 			oStream.flush();
@@ -351,27 +282,23 @@ public class Client2Proxy
 	}
 
 
-	public ByteArrayBuffer getToChar(char ch, boolean readEmptyLineFirst) throws IOException
+	public ByteArrayBuffer getToChar(char ch) throws IOException
 	{
-		if(readEmptyLineFirst)
-			emptyReadToLineEnd();
-
 		lineBF.setLength(0);
 		int l= iStream.read();
-
-		if(l==-1 || l=='\r')
+		if(l < 0)
+			throw new IOException("客户端读取数据失败");
+		if(l=='\r')
 		{
-			iStream.read();
+			iStream.read();//读一个\n
 			return lineBF;
 		}
 		lineBF.append(l);
 		while(l != ch)
 		{
 			l= iStream.read();
-			if(l != -1)
-			{
+			if(l >-1)
 				lineBF.append(l);
-			}
 			else
 				break;
 		}
@@ -380,10 +307,9 @@ public class Client2Proxy
 	public void emptyReadToLineEnd() throws IOException
 	{
 		int l= 0;
-		while(l != '\n')
+		while(l != '\n' && l > -1)
 		{
 			l= iStream.read();
-			if(l == -1) break;
 		}
 	}
 	public void write2BufferToLineEnd(ByteArrayBuffer bab) throws IOException
@@ -392,10 +318,8 @@ public class Client2Proxy
 		while(l != '\n')
 		{
 			l= iStream.read();
-			if(l != -1)
-			{
+			if(l > -1)
 				bab.append(l);
-			}
 			else
 				break;
 		}
@@ -406,20 +330,11 @@ public class Client2Proxy
 		while(l != '\n')
 		{
 			l= iStream.read();
-			if(l != -1)
-			{
+			if(l > -1)
 				oStream.write(l);
-			}
 			else
 				break;
 		}
-	}
-
-	protected boolean isSupport(String methord)
-	{
-		String temp = methord.toUpperCase(Locale.ENGLISH);
-
-		return startsWith(temp, "GET") ||startsWith(temp, "POST")|| startsWith(temp, "CONNECT")||startsWith(temp, "HEAD") || startsWith(temp, "OPTION") || startsWith(temp, "DEBUG");
 	}
 	/***
 	 * 根据请求的HttpFirstLine解析结果 以及Config中的配置信息，判断是否需要连接到Server
@@ -430,16 +345,17 @@ public class Client2Proxy
 	 */
 	protected void ConnectToServer() throws HostNotFoundExpection, NumberFormatException, IOException
 	{
-		if(Config.isProxyServer)
+		if(ModelConfig.isProxyServer)
 		{
-			if(!conn.isConnectToServer())
+			if(conn.isServiceSocketNull())
 			{
-				int index = Config.proxyServer.indexOf(':');
+				int index = ModelConfig.proxyServer.indexOf(':');
 				conn.setNewServer(
 						new Socket(
-								Config.proxyServer.substring(0, index),Integer.parseInt(Config.proxyServer.substring(index+1))
+								ModelConfig.proxyServer.substring(0, index),Integer.parseInt(ModelConfig.proxyServer.substring(index+1))
 						));
 				S2P = new Server2Proxy(conn);
+				S2P.setName("S2C");
 				S2P.start();
 				oStream = conn.getSerrverOUT();//更新输出流
 			}
@@ -459,9 +375,10 @@ public class Client2Proxy
 					S2P.interrupt();
 				}
 
-				Socket serverSocket = new Socket(InetAddress.getByName(hfl.Host), hfl.Port);
+				Socket serverSocket = new Socket(hfl.Host, hfl.Port);
 				conn.setNewServer(serverSocket);
 				S2P = new Server2Proxy(conn);
+				S2P.setName("S2C");
 				S2P.start();	//服务端线程启动的时机，新的服务端Socket被建立的时候
 				oStream = conn.getSerrverOUT();//更新输出流
 				OldHost = hfl.Host;

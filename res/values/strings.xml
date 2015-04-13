@@ -1,7 +1,45 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <string name="app_name">代理服务</string>
-    <string name="action_settings">Settings</string>
 
+
+    <string name="app_name">代理服务</string>
+    <string name="service_name">ProxyServer</string>
+    <string name="action_settings">设置</string>
+
+    <string name="sdNotExists">SD卡不存在，无法启动</string>
+    <string name="waring">专机专用，请勿拷贝&lt;br&gt;&lt;font color=&quot;#00CCFF&quot;&gt;&lt;u&gt;Click Me&lt;/u&gt;&lt;font&gt;</string>
+
+    <string name="confilgFileNotExit">配置文件不存在</string>
+    <string name="configFileReadError">配置文件读取失败</string>
+    <string name="about">Cfun制作 ^_^</string>
+    <string name="cmdFinish">命令执行完毕</string>
+    <string name="cmdFail">命令执行失败,请确定已取得并授权Root权限</string>
+    <string name="massageAreadyCopy">信息已复制，请发给作者</string>
+    <string name="unKnow"> 未知</string>
+    <string name="banMianChoses">不免选择</string>
+    <string name="bumianChoses">半免选择</string>
+    <string name="serviceRunningBack">代理服务正在后台运行</string>
+    <string name="serviceRunning">代理服务正在运行</string>
+    <string name="nowThread">当前活跃线程总数:%d</string>
+    <string name="serviceFail">服务启动失败，原因：%s</string>
+    <string name="serviceExecption">服务异常，无法启动</string>
+    <string name="serviceSucc">服务启动成功</string>
+    <string name="serviceDescription">代理上网服务，用来代理其他软件连接互联网</string>
+    <string name="meituan">美团</string>
+
+    <string name="menu_set">设 置</string>
+    <string name="menu_edit">编 辑</string>
+    <string name="menu_about">关 于</string>
+
+    <string name="openService">开 启</string>
+    <string name="closeService">关 闭</string>
+
+    <string name="waiting">加载中....</string>
+
+    <array name="qqPackageNames">
+        <item>com.tencent.mobileqq</item>
+        <item>com.tencent.mobileqqi</item>
+        <item>com.tencent.qqlite</item>
+    </array>
 </resources>

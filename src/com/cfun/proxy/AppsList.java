@@ -1,43 +1,54 @@
 package com.cfun.proxy;
 
-
-
-import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageInfo;
 import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+//import android.util.Log;
 import android.view.*;
 import android.widget.*;
+import com.cfun.proxy.Base.BaseActivity;
+import com.cfun.proxy.Config.GlobleConfig;
+import com.cfun.proxy.util.ChenJinUtil;
 
 import java.text.Collator;
 import java.util.*;
-import java.util.zip.Inflater;
 
-public class AppsList extends Activity
+public class AppsList extends BaseActivity implements AdapterView.OnItemClickListener, CompoundButton.OnCheckedChangeListener
 {
-
 	private PopupWindow popwindow;
-	private boolean isNotFree = false;
+	private boolean isBanMian = false;
+	private boolean isBumian = false;
 	private static List<Map<String, Object>> allAppInfo;
+//	private static String TAG = "-----";
+
 	private AppAdapter adapter;
+	@Override
+	public void finish()
+	{
+		super.finish();;
+		if(isBumian)
+			overridePendingTransition(R.anim.my_trans_right_in,R.anim.my_trans_left_out);
+		else
+			overridePendingTransition(R.anim.my_trans_left_in,R.anim.my_trans_right_out);
+	}
+
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-
 		setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 		setContentView(R.layout.apps_list);
-		isNotFree = getIntent().getBooleanExtra("isNotFree",true);
+		ChenJinUtil.chenJin(this, findViewById(R.id.chenJinBar), getResources().getColor(R.color.blueTop));
+		isBanMian =  "banmian".equals(getIntent().getStringExtra("mian"));
+		isBumian = !isBanMian;
 
 		View v = getLayoutInflater().inflate(R.layout.processbar,null);
 		popwindow = new PopupWindow(v, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
@@ -50,18 +61,18 @@ public class AppsList extends Activity
 				super.handleMessage(msg);
 				String mian;
 				String another;
-				if(isNotFree)
+				if(isBumian)
 				{
-					mian= getSharedPreferences(Config.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("bumian","");
-					another = getSharedPreferences(Config.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("banmian","");
+					mian= getSharedPreferences(GlobleConfig.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("bumian","");
+					another = getSharedPreferences(GlobleConfig.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("banmian","");
 				}
 				else
 				{
-					mian= getSharedPreferences(Config.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("banmian","");
-					another = getSharedPreferences(Config.app_PerferenceName, android.content.Context.MODE_PRIVATE).getString("bumian","");
+					mian= getSharedPreferences(GlobleConfig.app_PerferenceName,android.content.Context.MODE_PRIVATE).getString("banmian","");
+					another = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).getString("bumian","");
 				}
-
-				HashSet<Integer> se = new HashSet<>();
+//				Log.d(TAG, "GET  mian="+mian+"  another="+another);
+				HashSet<Integer> mainSet = new HashSet<>();
 				if(!mian.isEmpty())
 				{
 					String ban[] = mian.split(" ");
@@ -69,11 +80,11 @@ public class AppsList extends Activity
 					{
 						for(String t: ban)
 						{
-							se.add(Integer.parseInt(t));
+							mainSet.add(Integer.parseInt(t));
 						}
 					}
 				}
-				HashSet<Integer> an = new HashSet<>();
+				HashSet<Integer> anotherSet = new HashSet<>();
 				if(!another.isEmpty())
 				{
 					String ana[] = another.split(" ");
@@ -81,12 +92,14 @@ public class AppsList extends Activity
 					{
 						for(String s:ana)
 						{
-							an.add(Integer.parseInt(s));
+							anotherSet.add(Integer.parseInt(s));
 						}
 					}
 				}
-				adapter = new AppAdapter(AppsList.this,allAppInfo,se,an);
-				((ListView)findViewById(R.id.listView_list_apps)).setAdapter(adapter);
+				adapter = new AppAdapter(AppsList.this,allAppInfo,mainSet,anotherSet);
+				ListView listView = ((ListView)findViewById(R.id.listView_list_apps));
+				listView.setAdapter(adapter);
+				listView.setOnItemClickListener(AppsList.this);
 				popwindow.dismiss();
 			}
 		};
@@ -103,10 +116,9 @@ public class AppsList extends Activity
 			@Override
 			public void run()
 			{
-
 				if(allAppInfo==null)
 				{
-					showPopWindow.sendEmptyMessageDelayed(0,50); //显示等待popwindow
+					showPopWindow.sendEmptyMessageDelayed(0,50); //��ʾ�ȴ�popwindow
 					allAppInfo = getInstalledApps();
 					final Comparator cmp = Collator.getInstance(Locale.CHINA);
 					Collections.sort(allAppInfo,new Comparator<Map<String, Object>>()
@@ -114,13 +126,15 @@ public class AppsList extends Activity
 						@Override
 						public int compare(Map<String, Object> lhs, Map<String, Object> rhs)
 						{
-							String n1 = (String)lhs.get("name");
-							String n2 = (String)rhs.get("name");
+							if( ((Boolean)lhs.get("system")).compareTo(((Boolean)rhs.get("system"))) != 0 )
+								return ((Boolean)lhs.get("system")).booleanValue() ? 1 : -1;
+							String n1 = ((String)lhs.get("name"));
+							String n2 = ((String)rhs.get("name"));
 							return cmp.compare(n1,n2);
 						}
 					});
 				}
-				appInfoFinish.sendEmptyMessage(0); //appinfo已完成，开始设置Apapter并显示View
+				appInfoFinish.sendEmptyMessage(0);
 			}
 		}).start();
 
@@ -136,18 +150,16 @@ public class AppsList extends Activity
 			@Override
 			public boolean left()
 			{
-				if(!isNotFree) return false;
+				if (isBanMian) return false;
 				finish();
-				overridePendingTransition(R.anim.my_trans_right_in,R.anim.my_trans_left_out);
 				return false;
 			}
 
 			@Override
 			public boolean right()
 			{
-				if(isNotFree) return false;
+				if (isBumian) return false;
 				finish();
-				overridePendingTransition(R.anim.my_trans_left_in,R.anim.my_trans_right_out);
 				return false;
 			}
 		});
@@ -157,24 +169,27 @@ public class AppsList extends Activity
 	protected void onResume()
 	{
 		super.onResume();
-		if(isNotFree)
-			((TextView)findViewById(R.id.app_list_title)).setText("不免选择");
+		if(isBumian)
+			((TextView)findViewById(R.id.app_list_title)).setText(R.string.bumianChoses);
 		else
-			((TextView)findViewById(R.id.app_list_title)).setText("半免选择");
+			((TextView)findViewById(R.id.app_list_title)).setText(R.string.banMianChoses);
 	}
 	private List<Map<String, Object>> getInstalledApps()
 	{
 		List<PackageInfo> packages = getPackageManager().getInstalledPackages(0);
 		List<Map<String, Object>> listMap = new ArrayList<Map<String,Object>>(packages.size());
+		String meituan = getString(R.string.meituan);
 		for (int j = 0; j < packages.size(); j++) {
 			Map<String, Object> map = new HashMap<String, Object>();
 			PackageInfo packageInfo = packages.get(j);
-			map.put("system",(packageInfo.applicationInfo.flags& ApplicationInfo.FLAG_SYSTEM)==0);
+			map.put("system", (packageInfo.applicationInfo.flags& ApplicationInfo.FLAG_SYSTEM) > 0);
 			map.put("img", packageInfo.applicationInfo.loadIcon(getPackageManager()).getCurrent());
-			map.put("name", packageInfo.applicationInfo.loadLabel(getPackageManager()).toString().trim());
+			map.put("name", packageInfo.applicationInfo.loadLabel(getPackageManager()).toString());
 			map.put("package", packageInfo.packageName);
 			map.put("uid", packageInfo.applicationInfo.uid);
 			listMap.add(map);
+			if(((String)map.get("name")).contains(meituan))
+				map.put("name", ((String)map.get("name")).replace((char)160, ' ').trim());
 		}
 		return listMap;
 	}
@@ -185,10 +200,6 @@ public class AppsList extends Activity
 		if(keyCode==KeyEvent.KEYCODE_BACK)
 		{
 			this.finish();
-			if(isNotFree)
-				overridePendingTransition(R.anim.my_trans_right_in,R.anim.my_trans_left_out);
-			else
-				overridePendingTransition(R.anim.my_trans_left_in,R.anim.my_trans_right_out);
 			return true;
 		}
 		return super.onKeyDown(keyCode, event);
@@ -204,134 +215,151 @@ public class AppsList extends Activity
 			select+=(String.valueOf(o)+" ");
 		}
 		if(select.length()>1) select = select.substring(0,select.length()-1);
-		SharedPreferences.Editor e = getSharedPreferences(Config.app_PerferenceName, android.content.Context.MODE_PRIVATE).edit();
-		if(isNotFree)
+		SharedPreferences.Editor e = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).edit();
+		if(isBumian)
 		{
+//			Log.d(TAG, "PUT bumian :"+select);
 			e.putString("bumian",select);
-			//全免
 		}else
 		{
+//			Log.d(TAG, "PUT banmian :"+select);
 			e.putString("banmian",select);
 		}
 		e.commit();
 		super.onStop();
 	}
 
-	public void onItemClick(View v)
+	@Override
+	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
 	{
-		AppAdapter ad = ((AppAdapter)((ListView)findViewById(R.id.listView_list_apps)).getAdapter());
-		if(((CheckBox)v).isChecked())
-		{
-			ad.addSelect((int) v.getTag());
-		}
-		else
-		{
-			ad.removeSelect((int)v.getTag());
-		}
+		CheckBox box = ((ViewHolder) view.getTag()).getCheckBox();
+		if(box.isEnabled())
+			box.setChecked(!box.isChecked());
+
 	}
-}
 
-class AppAdapter extends BaseAdapter
-{
-	List<Map<String, Object>> applist;
-	Context context;
-	HashSet<Integer> checkedUid;
-	HashSet<Integer> anotherSide;
-
-
-	AppAdapter(Context context, List<Map<String, Object>> applist, HashSet<Integer> checkedUid, HashSet<Integer> anotherSide)
+	@Override
+	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)
 	{
-		this.context = context;
-		this.applist = applist;
-		if(checkedUid!=null)
-			this.checkedUid = checkedUid;
-		else
-			this.checkedUid = new HashSet<Integer>();
-		if(anotherSide!=null)
+			if(isChecked)
+			{
+//				Log.d(TAG, "ADD MAIN :"+buttonView.getTag());
+				adapter.addSelect((Integer) buttonView.getTag());
+			}
+			else
+			{
+//				Log.d(TAG, "DELETE  MAIN :"+buttonView.getTag());
+				adapter.removeSelect((Integer)buttonView.getTag());
+			}
+	}
+
+	class AppAdapter extends BaseAdapter
+	{
+		List<Map<String, Object>> applist;
+		Context context;
+		HashSet<Integer> checkedUid;
+		HashSet<Integer> anotherSide;
+
+
+		AppAdapter(Context context, List<Map<String, Object>> applist, HashSet<Integer> checkedUid, HashSet<Integer> anotherSide)
+		{
+			this.context = context;
+			this.applist = applist;
+			if(checkedUid!=null)
+				this.checkedUid = checkedUid;
+			else
+				this.checkedUid = new HashSet<Integer>();
+			if(anotherSide!=null)
+				this.anotherSide = anotherSide;
+			else
+				this.anotherSide = new HashSet<Integer>();
+		}
+
+		public void addSelect(int select)
+		{
+			checkedUid.add(select);
+		}
+		public void removeSelect(int select)
+		{
+			checkedUid.remove(select);
+		}
+		public HashSet<Integer> getSelect()
+		{
+			return checkedUid;
+		}
+		public void setAnotherSide(HashSet<Integer> anotherSide)
+		{
 			this.anotherSide = anotherSide;
-		else
-			this.anotherSide = new HashSet<Integer>();
-	}
-
-	public void addSelect(int select)
-	{
-		checkedUid.add(select);
-	}
-	public void removeSelect(int select)
-	{
-		checkedUid.remove(select);
-	}
-	public HashSet<Integer> getSelect()
-	{
-		return checkedUid;
-	}
-	public void setAnotherSide(HashSet<Integer> anotherSide)
-	{
-		this.anotherSide = anotherSide;
-	}
-
-	@Override
-	public int getCount()
-	{
-		return applist.size();
-	}
-
-	@Override
-	public long getItemId(int position)
-	{
-		return position;
-	}
-
-	@Override
-	public Object getItem(int position)
-	{
-		return applist.get(position);
-	}
-
-	@Override
-	public View getView(int position, View convertView, ViewGroup parent)
-	{
-		if(convertView==null)
-		{
-			LayoutInflater layoutInflater = LayoutInflater.from(context);
-			convertView = layoutInflater.inflate(R.layout.apps_list_item,null);
-			ViewHolder v = new ViewHolder();
-			v.setCheckBox(((CheckBox)convertView.findViewById(R.id.checkbox_check)));
-			v.setImageView((ImageView)convertView.findViewById(R.id.imageView));
-			v.setName((TextView)convertView.findViewById(R.id.textView_appname));
-			v.setPackageView((TextView)convertView.findViewById(R.id.textView_packagename));
-			v.setUid((TextView)convertView.findViewById(R.id.textview_uid));
-			convertView.setTag(v);
 		}
-		Map<String, Object> m =applist.get(position);
-		ViewHolder v = (ViewHolder)convertView.getTag();
-		v.getImageView().setImageDrawable((Drawable)m.get("img"));
-		v.getName().setText((CharSequence)m.get("name"));
-		v.getPackageView().setText((CharSequence)m.get("package"));
-		v.getUid().setText(""+(int)m.get("uid"));
 
-		v.getCheckBox().setChecked(checkedUid.contains((Integer)m.get("uid")));
-		if(anotherSide.contains(m.get("uid")))
+		@Override
+		public int getCount()
 		{
-			v.getCheckBox().setChecked(true);
-			v.getCheckBox().setEnabled(false);
-			convertView.setBackgroundColor(Color.argb(200,222,222,222));
+			return applist.size();
 		}
-		else
-		{
-			v.getCheckBox().setEnabled(true);
-			convertView.setBackgroundColor(Color.argb(0,0,0,0));
-		}
-		convertView.findViewById(R.id.checkbox_check).setTag(m.get("uid"));
-		return convertView;
-	}
 
-	@Override
-	public boolean isEmpty()
-	{
-		return applist.isEmpty();
+		@Override
+		public long getItemId(int position)
+		{
+			return position;
+		}
+
+		@Override
+		public Object getItem(int position)
+		{
+			return applist.get(position);
+		}
+
+		@Override
+		public View getView(int position, View convertView, ViewGroup parent)
+		{
+			if(convertView==null)
+			{
+				LayoutInflater layoutInflater = LayoutInflater.from(context);
+				convertView = layoutInflater.inflate(R.layout.apps_list_item,null);
+				ViewHolder v = new ViewHolder();
+				v.setCheckBox(((CheckBox) convertView.findViewById(R.id.checkbox_check)));
+				v.setImageView((ImageView) convertView.findViewById(R.id.imageView));
+				v.setName((TextView) convertView.findViewById(R.id.textView_appname));
+				v.setPackageView((TextView) convertView.findViewById(R.id.textView_packagename));
+				v.setUid((TextView) convertView.findViewById(R.id.textview_uid));
+				convertView.setTag(v);
+			}
+
+			Map<String, Object> m =applist.get(position);
+			ViewHolder v = (ViewHolder)convertView.getTag();
+			v.getCheckBox().setOnCheckedChangeListener(null); //避免下面的setChecked触发多余的OnCheckedChanged操作
+			v.getImageView().setImageDrawable((Drawable) m.get("img"));
+			v.getName().setText((CharSequence) m.get("name"));
+			v.getPackageView().setText((CharSequence)m.get("package"));
+			v.getUid().setText("" + (int) m.get("uid"));
+
+			v.getCheckBox().setTag(m.get("uid"));
+			v.getCheckBox().setChecked(checkedUid.contains((Integer) m.get("uid")));
+			if (anotherSide.contains(m.get("uid")))
+			{
+				v.getCheckBox().setChecked(true);
+				v.getCheckBox().setEnabled(false);
+				convertView.setBackgroundColor(Color.argb(200,222,222,222));
+			}
+			else
+			{
+				v.getCheckBox().setEnabled(true);
+				convertView.setBackgroundColor(Color.argb(0,0,0,0));
+			}
+			v.getCheckBox().setOnCheckedChangeListener(AppsList.this);
+			return convertView;
+		}
+
+		@Override
+		public boolean isEmpty()
+		{
+			return applist.isEmpty();
+		}
 	}
 }
+
+
 
 class ViewHolder
 {

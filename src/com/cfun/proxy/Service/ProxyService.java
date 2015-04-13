@@ -6,21 +6,28 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Drawable;
 import android.os.IBinder;
 import android.widget.Toast;
 
-import com.cfun.proxy.Config;
+import com.cfun.proxy.Config.AppConfig;
+import com.cfun.proxy.Config.ModelConfig;
 import com.cfun.proxy.MainActivity;
 import com.cfun.proxy.R;
 import com.cfun.proxy.Base.BaseApplication;
 import com.proxyServer.proxy.Proxy;
 
+import java.io.UnsupportedEncodingException;
+
 public class ProxyService extends Service
 {
 	private Thread service;
-	private Notification notification;
-	private PendingIntent pi;
 	private UpdateNotification un;
+	private NotificationManager mNM;
+	private static Notification.Builder builder = null;
+	public static Integer workingThread = 0;
 	@Override
 	public IBinder onBind(Intent arg0)
 	{
@@ -30,112 +37,126 @@ public class ProxyService extends Service
 	@Override
 	public void onDestroy()
 	{
+		builder = null;
 		if(service != null)
 		{
 			((Proxy)service).RelasePort();
-			((Proxy)service).interrupt();
+			service.interrupt();
 			stopForeground(true);
 		}
 		if(un!=null)un.beDie();
-//		unregisterReceiver(rec);
-		((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE))
-				.cancel(1);
+		mNM.cancel(1);
 		super.onDestroy();
 	}
+
+
 
 	@Override
 	public int onStartCommand(Intent intent,int flags,int startId)
 	{
+//		super.onStartCommand(intent, flags, startId);
 		try
 		{
-			Config.refresh(this.getBaseContext());
+			AppConfig.refresh(this);
+			ModelConfig.refresh(this);
+		} catch (UnsupportedEncodingException e)
+		{
+			Toast.makeText(this, R.string.configFileReadError, Toast.LENGTH_SHORT).show();
+			return Service.START_NOT_STICKY;
+		}
+		try
+		{
+			AppConfig.refresh(this.getBaseContext());
 			((Proxy) service).BindPort();
-			initNotifycation();
-			startForeground(1,notification);
+			startForeground(1, getNotifycation(getString(R.string.serviceRunning)));
 		}
 		catch(Exception e)
 		{
-			Toast.makeText(this.getBaseContext(), "服务启动失败，原因："+e.getMessage(), Toast.LENGTH_LONG).show();
+			Toast.makeText(this.getBaseContext(), String.format(getString(R.string.serviceFail), e.getMessage()), Toast.LENGTH_SHORT).show();
 			return START_NOT_STICKY;
 		}
 		if(service != null && !service.isAlive())
 		{
 			service.start();
-			Toast.makeText(this.getBaseContext(), "服务启动成功", Toast.LENGTH_LONG).show();
+			service.setName("ProxyListener");
+			Toast.makeText(this.getBaseContext(), R.string.serviceSucc, Toast.LENGTH_SHORT).show();
 		}
 		else
 		{
 			if(service==null)
-				Toast.makeText(this.getBaseContext(), "服务异常，无法启动", Toast.LENGTH_LONG).show();
+				Toast.makeText(this.getBaseContext(), R.string.serviceExecption, Toast.LENGTH_SHORT).show();
 			else if(service.isAlive())
-			Toast.makeText(this.getBaseContext(), "服务服务正在运行", Toast.LENGTH_LONG).show();
+			Toast.makeText(this.getBaseContext(), R.string.serviceRunning, Toast.LENGTH_SHORT).show();
 		}
-//		registerReceiver(rec,f);
-
-		un = new UpdateNotification(notification,pi);
-		new Thread(un).start();
-		return super.onStartCommand(intent, flags, startId);
+		un = new UpdateNotification(mNM);
+		Thread thread= new Thread(un);
+		thread.setName("NotifycationUpdateThread");
+		thread.start();
+		return Service.START_STICKY;
 	}
 
 	@Override
 	public void onCreate()
 	{
 		service= new Proxy();
+		mNM = ((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE));
 		super.onCreate();
 	}
 
 
-	private void initNotifycation()
+	public static Notification getNotifycation(String str)
 	{
-		Intent realIntent = new Intent(this,MainActivity.class);
-		realIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-//		Intent clickIntent = new Intent(this, NotifiClickreceiver.class);
-//		clickIntent.putExtra("realIntent", realIntent);
-
-//		PendingIntent pi = PendingIntent.getBroadcast(this, 0, clickIntent, PendingIntent.FLAG_UPDATE_CURRENT);
-		pi = PendingIntent.getActivity(this,0,realIntent,PendingIntent.FLAG_UPDATE_CURRENT);
-		realIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
-		notification = new Notification.Builder(this).setSmallIcon(R.drawable.ic_launcher)
-				.setTicker("代理服务正在后台运行")
-				.setContentTitle("代理服务正在运行")
-				.setContentText("已在后台监听10080端口")
-				.setWhen(System.currentTimeMillis())
-				.setOngoing(true)
-				.setOnlyAlertOnce(true)
-				.setContentIntent(pi)
-				.getNotification();
-//		((NotificationManager)getSystemService(Context.NOTIFICATION_SERVICE)).notify(1,notification);
+		if(builder == null)
+		{
+			Intent realIntent = new Intent(BaseApplication.getInstance(),MainActivity.class);
+			realIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+			PendingIntent pi = PendingIntent.getActivity(BaseApplication.getInstance(),0,realIntent,PendingIntent.FLAG_UPDATE_CURRENT);
+			realIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+			builder =  new Notification.Builder(BaseApplication.getInstance())
+					.setSmallIcon(R.drawable.icon)
+					.setTicker(BaseApplication.getInstance().getString(R.string.serviceRunningBack))
+					.setContentTitle(BaseApplication.getInstance().getString(R.string.serviceRunning))
+					.setWhen(System.currentTimeMillis())
+					.setOngoing(true)
+					.setOnlyAlertOnce(true)
+					.setContentIntent(pi);
+		}
+		return builder.setContentText(str).build();
 	}
 }
 class UpdateNotification implements Runnable
 {
 	private boolean die = false;
-	private Notification notification;
-	private PendingIntent pi;
+	private NotificationManager mNM;
 
-	public UpdateNotification(Notification notification, PendingIntent pi)
+	public UpdateNotification(NotificationManager mNM)
 	{
-		this.notification = notification;
-		this.pi = pi;
+		this.mNM = mNM;
 	}
 
 	@Override
 	public void run()
 	{
+		int oldThreadCount = 0;
 		while (true)
 		{
 			if(die)
 				break;
-			String str = "当前活跃线程总数:"+ Thread.activeCount();
-			notification.setLatestEventInfo(BaseApplication.getInstance(),"代理服务正在运行",str,pi);
-			((NotificationManager) BaseApplication.getInstance().getSystemService(Context.NOTIFICATION_SERVICE)).notify(1, notification);
+			if(oldThreadCount != ProxyService.workingThread)
+			{
+				String str = null;
+				synchronized (ProxyService.workingThread)
+				{
+					oldThreadCount = ProxyService.workingThread;
+					str = String.format(BaseApplication.getInstance().getString(R.string.nowThread), ProxyService.workingThread);
+				}
+				mNM.notify(1, ProxyService.getNotifycation(str));
+			}
 			try
 			{
 				Thread.sleep(2000);
 			} catch (InterruptedException e)
-			{
-
-			}
+			{}
 		}
 
 	}
@@ -145,4 +166,3 @@ class UpdateNotification implements Runnable
 		die = true;
 	}
 }
-

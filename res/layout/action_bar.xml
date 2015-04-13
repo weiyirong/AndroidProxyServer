@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+             android:layout_width="match_parent"
+             android:layout_height="match_parent" android:background="@color/blueTop">
+
+    <ImageView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:id="@+id/menu" android:layout_gravity="center_vertical|right"
+            android:src="@drawable/ic_action_bar_menu" android:background="@drawable/bg_action_bar_btn"
+            android:focusable="false" android:paddingRight="5dp"/>
+    <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/app_name"
+            android:textColor="#ff292a2f"
+            android:id="@+id/textView2" android:layout_gravity="center" android:textSize="20sp"/>
+</FrameLayout>

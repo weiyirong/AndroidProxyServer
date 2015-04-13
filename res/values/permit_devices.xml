@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="permit_device">
+        <item>CC2AA119CBD0D3E02947196282A7468B</item>
+        <item>85461EE4283D9D610C33591230AD88A5</item>
+        <item>8BB1859E03019176533FBB31DB2B8C0F</item>
+    </string-array>
+</resources>

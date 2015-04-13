@@ -1,6 +1,6 @@
 package com.proxyServer.HttpProxy;
 
-import com.cfun.proxy.Config;
+import com.cfun.proxy.Config.AppConfig;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
@@ -9,7 +9,7 @@ import java.net.Socket;
 
 public class HttpConnection
 {
-	private int count = 0;
+	private static int threadID = 0;
 	private Socket clientSocket;
 	private Socket serverSocket;
 
@@ -18,9 +18,10 @@ public class HttpConnection
 	private BufferedOutputStream clientOut;
 	private BufferedOutputStream serverOut;
 
-
-
-
+	public HttpConnection()
+	{
+		threadID++;
+	}
 
 	public void setNewClient(Socket client) throws IOException
 	{
@@ -28,9 +29,7 @@ public class HttpConnection
 		this.clientSocket = client;
 		this.clientIn = new BufferedInputStream(client.getInputStream());
 		this.clientOut = new BufferedOutputStream(client.getOutputStream());
-		if(Config.timeout!=0)
-			clientSocket.setSoTimeout(Config.timeout);
-		count+=2;
+		clientSocket.setSoTimeout(AppConfig.timeout);
 	}
 	public void setNewServer(Socket server) throws IOException
 	{
@@ -39,9 +38,7 @@ public class HttpConnection
 		this.serverIn = new BufferedInputStream(server.getInputStream());
 		this.serverOut = new BufferedOutputStream(server.getOutputStream());
 
-		if(Config.timeout!=0)
-			serverSocket.setSoTimeout(Config.timeout);
-		count+=2;
+		serverSocket.setSoTimeout(AppConfig.timeout);
 	}
 
 	public BufferedInputStream getClientIN()
@@ -72,7 +69,6 @@ public class HttpConnection
 
 	public void closeClient()
 	{
-
 			if(clientSocket != null && !clientSocket.isClosed())
 			{
 				closeClientIn();
@@ -122,7 +118,7 @@ public class HttpConnection
 			if(clientSocket.isInputShutdown())
 				c++;
 		}
-		if(c==4)
+		if(c>=3)
 		{
 			if(serverSocket!=null) try
 			{
@@ -138,32 +134,26 @@ public class HttpConnection
 
 			}
 		}
+		else
+		{
+			try
+			{
+				if(serverSocket!= null && serverSocket.isInputShutdown() && serverSocket.isOutputShutdown())
+					serverSocket.close();
+				else if(clientSocket != null && clientSocket.isInputShutdown() && clientSocket.isOutputShutdown())
+					clientSocket.close();
+			}catch (IOException e)
+			{}
+
+		}
 	}
 	public boolean isConnectToServer()
 	{
-		return serverSocket!=null && !serverSocket.isClosed();
+		return serverSocket!=null && serverSocket.isConnected();
 	}
-
-	public boolean isClientConnection()
+	public boolean isServiceSocketNull()
 	{
-		return clientSocket!=null && !clientSocket.isClosed();
-	}
-	public boolean isS2CCanClose()
-	{
-		if(!(isConnectToServer() && isClientConnection()))
-			return true;
-		if(serverSocket.isInputShutdown()||clientSocket.isOutputShutdown())
-			return true;
-		return false;
-	}
-	public boolean isC2SCanClose()
-	{
-		if(!(isConnectToServer() && isClientConnection()))
-			return true;
-
-		if(clientSocket.isInputShutdown() || serverSocket.isOutputShutdown())
-			return true;
-		return false;
+		return serverSocket == null;
 	}
 
 	public void closeS2C()
@@ -223,10 +213,7 @@ public class HttpConnection
 			}
 		}catch(Exception e){}
 		check();
-
 	}
-
-
 }
 
 

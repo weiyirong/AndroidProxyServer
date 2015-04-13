@@ -29,7 +29,6 @@ public class AppFileUtil
 			os.close();
 		} catch (IOException e)
 		{
-			Log.e("WriteFileError", e.getMessage());
 		}
 	}
 

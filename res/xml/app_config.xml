@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+
+
+    <PreferenceCategory android:title="超时设定">
+        <EditTextPreference
+                android:defaultValue="60"
+                android:key="timeout"
+                android:title="网络无连接超时时间设定"
+                android:summary="为0则不设置超时，单位(秒)"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="防跳设定">
+        <EditTextPreference
+                android:defaultValue="ccmni0"
+                android:key="gprs_interface"
+                android:title="网卡名称"/>
+
+        <EditTextPreference
+                android:defaultValue="ap0 rndis0"
+                android:key="shared_interface"
+                android:title="WiFi和USB共享网卡"/>
+    </PreferenceCategory>
+
+</PreferenceScreen>

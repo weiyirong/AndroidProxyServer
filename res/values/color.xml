@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="blueTop">#ee0bbecf</color>
+    <color name="menuPress">#ee0999a8</color>
+
+    <color name="setting_back">#ff06312f</color>
+    <color name="menuBack">#ee0ba3b4</color>
+    <color name="menuTextColor">#ff2e2e2e</color>
+    <color name="menu_splitLine">#ee0a7c8a</color>
+
+    <color name="btn_normal">#cb5ab1b9</color>
+    <color name="btn_press">#cb498a90</color>
+    <color name="btn_disable">#cb837e87</color>
+</resources>

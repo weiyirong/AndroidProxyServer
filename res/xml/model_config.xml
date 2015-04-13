@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory android:title="代理服务器设定">
+        <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="isProxyServer"
+                android:title="是否使用代理服务器"/>
+
+        <EditTextPreference
+                android:defaultValue="10.0.0.172:80"
+                android:key="proxyServer"
+                android:title="代理IP和端口号"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="HTTP请求行设定">
+        <EditTextPreference
+                android:defaultValue="[M] http://[H][U][S]m.client.10010.com [V]\nHost: m.client.10010.com\n"
+                android:key="firstLinePattern"
+                android:summary="[M]=method,[H]=host:port,[V]=version,[S]=smart,\\r=\\r,\\n=\\n,换行自动删除"
+                android:title="模式匹配第一行数据"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="删除头域设定">
+        <EditTextPreference
+                android:defaultValue="Host|X-Online-Host"
+                android:key="deleteHeads"
+                android:title="要删除的头域"
+                android:summary="区分大小写,以'|'分割"/>
+    </PreferenceCategory>
+    <PreferenceCategory android:title="HTTPS免流设定">
+        <CheckBoxPreference
+                android:defaultValue="false"
+                android:key="isHttps"
+                android:title="是否启用Https免流"
+                android:summary="若开启引起登录异常，则不要开启HTTPS"/>
+
+        <EditTextPreference
+                android:defaultValue=""
+                android:key="https"
+                android:title="https模式匹配请求头"/>
+    </PreferenceCategory>
+</PreferenceScreen>

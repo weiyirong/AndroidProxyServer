@@ -19,5 +19,8 @@
     <style name="MyCheckBox" parent="@android:style/Widget.CompoundButton.CheckBox">
         <item name="android:button">@drawable/checkbox</item>
     </style>
-
+    <style name="popwin_anim_style">
+        <item name="android:windowEnterAnimation">@anim/my_trans_right_in</item>
+        <item name="android:windowExitAnimation">@anim/my_trans_right_out</item>
+    </style>
 </resources>

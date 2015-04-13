@@ -16,9 +16,9 @@ import com.cfun.proxy.util.DensityUtil;
  */
 public abstract class GestureListener extends SimpleOnGestureListener implements OnTouchListener {
 	/** 左右滑动的最短距离 dp*/
-	private int distance = 50;
-	/** 左右滑动的最大速度 dp*/
-	private int velocity = 200;
+	private int distance = 100;
+	/** 左右滑动的最小速度 dp*/
+	private int velocity = 300;
 
 	private GestureDetector gestureDetector;
 

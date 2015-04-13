@@ -22,9 +22,8 @@ public class HttpFirstLine
 
 	public HttpFirstLine(String httpFirstLine) throws IOException, FirstLineFormatErrorExpection
 	{
-		//LogFile.getInstance().getQueue().add((headString + "\r\n").getBytes());
 		String[] strArray= httpFirstLine.trim().split(" ");
-		if(strArray.length!=3) {System.out.println(httpFirstLine); throw new FirstLineFormatErrorExpection(httpFirstLine);}
+		if(strArray.length!=3) { throw new FirstLineFormatErrorExpection(httpFirstLine);}
 		//0 即为方法体
 		this.Method= strArray[0];
 		//2 即为版本信息
@@ -64,10 +63,9 @@ public class HttpFirstLine
 		else
 		{
 			Host = H;
-			Port = 80;
+			Port = isSSL ? 443 : 80;
 		}
 		HP   = H.getBytes("iso8859-1");
 	}
-
 
 }
