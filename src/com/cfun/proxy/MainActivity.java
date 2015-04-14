@@ -161,7 +161,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 				}
 				ModleHelper.writeProperties2Perference(properties);
 				editor.putString("MLModle", name);
-				editor.apply();
+				editor.commit();
 			}
 
 			@Override
@@ -169,7 +169,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 			{
 				SharedPreferences.Editor editor = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).edit();
 				editor.putString("MLModle", "");
-				editor.apply();
+				editor.commit();
 			}
 		});
 	}

@@ -53,7 +53,7 @@ public class ModelConfig implements Serializable
 		https =  StringUtils.replace(https, "\n", "");
 		https =  StringUtils.replace(https, "\\n", "\n");
 		https =  StringUtils.replace(https, "\\r", "\r");
-		httpsHelpByte = realStrs2ByteArrays(StringUtils.split(https, "[H]"));
+		httpsHelpByte = realStrs2ByteArrays(https.split("\\[H\\]"));
 	}
 
 	public static void initFirstLine(SharedPreferences pres)
@@ -69,7 +69,7 @@ public class ModelConfig implements Serializable
 
 		/** init  firstLineReplaceArray*/
 		Matcher matcher =  pattern.matcher(firstLinePattern);
-		List<Byte> list = new LinkedList<>();
+		List<Byte> list = new LinkedList<Byte>();
 		while (matcher.find())
 		{
 			String match =  matcher.group();

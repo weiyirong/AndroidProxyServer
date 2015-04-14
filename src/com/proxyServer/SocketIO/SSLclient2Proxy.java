@@ -4,7 +4,9 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
 
+import android.util.Log;
 import com.cfun.proxy.Config.ModelConfig;
 import com.cfun.proxy.util.ModleHelper;
 import com.proxyServer.HttpProxy.HttpConnection;
@@ -12,7 +14,7 @@ import com.proxyServer.HttpProxy.HttpConnection;
 
 public class SSLclient2Proxy
 {
-
+	private static  final String TAG = SSLclient2Proxy.class.getSimpleName();
 	private byte[] buffer= new byte[20480];
 	private HttpConnection conn= null;
 
@@ -25,8 +27,14 @@ public class SSLclient2Proxy
 			for(int i = 0; i<ModelConfig.httpsHelpByte.length; i++)
 			{
 				conn.getSerrverOUT().write(ModelConfig.httpsHelpByte[i]);
-				if(i<ModelConfig.httpsHelpByte.length - 1)
+//				LogOut(new String(ModelConfig.httpsHelpByte[i]));
+				if(i !=(ModelConfig.httpsHelpByte.length - 1))
+				{
+//					String ip = InetAddress.getByName(hfl.Host).getHostAddress();
+//					conn.getSerrverOUT().write((ip + ":" + hfl.Port).getBytes());
+//					LogOut(ip+":"+hfl.Port);
 					conn.getSerrverOUT().write(hfl.HP);
+				}
 			}
 		}
 		else
@@ -55,8 +63,11 @@ public class SSLclient2Proxy
 	}
 	private  void readToBody(InputStream iStream) throws IOException
 	{
-		while (readEmptyLine(iStream) > 2)
+		int  i=10;
+		while (i > 1)
 		{
+			i = readEmptyLine(iStream);
+//			LogOut("READ "+i);
 		}
 	}
 	private int readEmptyLine(InputStream iStream) throws IOException
@@ -68,7 +79,10 @@ public class SSLclient2Proxy
 				i++;
 				l = iStream.read();
 			}
-
 		return i;
 	}
+//	private  static void LogOut(String msg)
+//	{
+//		Log.d(TAG, msg);
+//	}
 }

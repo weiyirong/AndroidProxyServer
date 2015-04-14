@@ -72,7 +72,7 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 					another = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).getString("bumian","");
 				}
 //				Log.d(TAG, "GET  mian="+mian+"  another="+another);
-				HashSet<Integer> mainSet = new HashSet<>();
+				HashSet<Integer> mainSet = new HashSet<Integer>();
 				if(!mian.isEmpty())
 				{
 					String ban[] = mian.split(" ");
@@ -84,7 +84,7 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 						}
 					}
 				}
-				HashSet<Integer> anotherSet = new HashSet<>();
+				HashSet<Integer> anotherSet = new HashSet<Integer>();
 				if(!another.isEmpty())
 				{
 					String ana[] = another.split(" ");
@@ -332,7 +332,7 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 			v.getImageView().setImageDrawable((Drawable) m.get("img"));
 			v.getName().setText((CharSequence) m.get("name"));
 			v.getPackageView().setText((CharSequence)m.get("package"));
-			v.getUid().setText("" + (int) m.get("uid"));
+			v.getUid().setText("" + (Integer) m.get("uid"));
 
 			v.getCheckBox().setTag(m.get("uid"));
 			v.getCheckBox().setChecked(checkedUid.contains((Integer) m.get("uid")));

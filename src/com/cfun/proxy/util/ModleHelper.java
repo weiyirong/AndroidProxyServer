@@ -108,7 +108,7 @@ public class ModleHelper
 		editor.putString("firstLinePattern", properties.getProperty("firstLinePattern"));
 		editor.putString("deleteHeads", properties.getProperty("deleteHeads"));
 
-		editor.apply();
+		editor.commit();
 	}
 
 	public static void writeProperties2PropertiesFile(String fileName, Properties properties) throws IOException
