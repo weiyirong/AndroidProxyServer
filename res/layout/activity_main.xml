@@ -1,25 +1,41 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context="com.cfun.myservice.MainActivity"
+                xmlns:tools="http://schemas.android.com/tools"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                tools:context="com.cfun.myservice.MainActivity"
         >
-    <View android:layout_height="0dp" android:layout_width="match_parent" android:layout_alignParentTop="true" android:id="@+id/chenJinBar" android:visibility="gone"></View>
-    <include android:layout_width="match_parent"
-             android:layout_height="35dp"
-             layout="@layout/action_bar" android:layout_alignParentStart="false" android:layout_below="@id/chenJinBar"
-             android:layout_alignParentLeft="false" android:layout_alignParentBottom="false"/>
+
+    <View
+            android:layout_height="0dp"
+            android:layout_width="match_parent"
+            android:layout_alignParentTop="true"
+            android:id="@+id/chenJinBar"
+            android:visibility="gone"></View>
+
+    <include
+            android:layout_width="match_parent"
+            android:layout_height="35dp"
+            layout="@layout/action_bar"
+            android:layout_alignParentStart="false"
+            android:layout_below="@id/chenJinBar"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentBottom="false"/>
+
     <LinearLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content" android:id="@+id/butttons"
-            android:paddingLeft="16dp" android:paddingRight="16dp" android:layout_centerVertical="true"
+            android:layout_height="wrap_content"
+            android:id="@+id/butttons"
+            android:paddingLeft="16dp"
+            android:paddingRight="16dp"
+            android:layout_centerVertical="true"
             >
 
         <LinearLayout
                 android:orientation="horizontal"
                 android:layout_width="fill_parent"
                 android:layout_height="fill_parent">
+
             <Spinner
                     android:layout_width="wrap_content"
                     android:layout_height="40dp"
@@ -27,30 +43,51 @@
                     style="@android:style/Theme.Holo"
                     android:layout_marginLeft="10dp"
                     />
-            <TextView android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="16sp"
-                      android:id="@+id/tv_apn" android:gravity="right"
-                      android:layout_marginRight="10dp"
-                      android:textColor="#ff8f8f8f" android:layout_gravity="center_vertical|right"/>
+
+            <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textSize="16sp"
+                    android:id="@+id/tv_apn"
+                    android:gravity="right"
+                    android:layout_marginRight="10dp"
+                    android:textColor="#ff8f8f8f"
+                    android:layout_gravity="center_vertical|right"/>
         </LinearLayout>
+
         <LinearLayout
                 android:layout_marginTop="10dp"
                 android:orientation="horizontal"
                 android:layout_width="fill_parent"
-                android:layout_height="fill_parent" android:paddingLeft="10dp" android:paddingRight="10dp">
+                android:layout_height="fill_parent"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp">
+
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/openService"
-                    android:id="@+id/tv_start" android:layout_weight="1" android:gravity="center"
-                    android:textSize="18sp" android:paddingTop="5dp" android:paddingBottom="5dp"
-                    android:background="@drawable/button_back" android:layout_marginRight="10dp"/>
+                    android:id="@+id/tv_start"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="18sp"
+                    android:paddingTop="5dp"
+                    android:paddingBottom="5dp"
+                    android:background="@drawable/button_back"
+                    android:layout_marginRight="10dp"/>
+
             <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/closeService"
-                    android:id="@+id/tv_stop" android:layout_weight="1" android:gravity="center"
-                    android:textSize="18sp" android:paddingBottom="5dp" android:paddingTop="5dp"
-                    android:background="@drawable/button_back" android:layout_marginLeft="10dp"/>
+                    android:id="@+id/tv_stop"
+                    android:layout_weight="1"
+                    android:gravity="center"
+                    android:textSize="18sp"
+                    android:paddingBottom="5dp"
+                    android:paddingTop="5dp"
+                    android:background="@drawable/button_back"
+                    android:layout_marginLeft="10dp"/>
         </LinearLayout>
     </LinearLayout>
 

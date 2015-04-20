@@ -485,17 +485,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 					// Get the Uri of the selected file
 					Uri uri = data.getData();
 					String path = FileUtil.getPath(this, uri);
+					SharedPreferences.Editor editor =getSharedPreferences(GlobleConfig.app_PerferenceName, MODE_PRIVATE).edit();
 					if(path.endsWith(".png") || path.endsWith(".jpg"))
 					{
-						SharedPreferences.Editor editor =getSharedPreferences(GlobleConfig.app_PerferenceName, MODE_PRIVATE).edit();
 						editor.putString("bg", path);
-						editor.commit();
-						BackgroundUtil.setBackground(this);
 					}
 					else
 					{
+						editor.putString("bg", "");
 						Toast.makeText(this, R.string.notImage, Toast.LENGTH_SHORT).show();
 					}
+					editor.commit();
+					BackgroundUtil.setBackground(this);
 				}
 				break;
 		}

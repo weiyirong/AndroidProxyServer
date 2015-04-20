@@ -1,9 +1,7 @@
 package com.cfun.proxy.util;
 
-import android.os.Message;
-import android.widget.Toast;
+
 import com.cfun.proxy.modle.ShellResult;
-import org.apache.commons.lang3.StringUtils;
 
 import java.io.*;
 

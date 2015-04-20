@@ -1,0 +1,8 @@
+.idea
+.settings
+bin
+proguard
+proguard_logs
+proxyServer.apk
+*.apk
+out

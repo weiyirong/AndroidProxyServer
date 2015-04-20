@@ -20,7 +20,7 @@ import com.cfun.proxy.util.ChenJinUtil;
 import java.text.Collator;
 import java.util.*;
 
-public class AppsList extends BaseActivity implements AdapterView.OnItemClickListener, CompoundButton.OnCheckedChangeListener
+public class AppsList extends BaseActivity implements CompoundButton.OnCheckedChangeListener
 {
 	private boolean isBanMian = false;
 	private boolean isBumian = false;
@@ -96,7 +96,7 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 				adapter = new AppAdapter(AppsList.this,allAppInfo,mainSet,anotherSet);
 				ListView listView = ((ListView)findViewById(R.id.listView_list_apps));
 				listView.setAdapter(adapter);
-				listView.setOnItemClickListener(AppsList.this);
+//				listView.setOnItemClickListener(AppsList.this);
 			}
 		};
 
@@ -218,14 +218,14 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 		super.onStop();
 	}
 
-	@Override
-	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
-	{
-		CheckBox box = ((ViewHolder) view.getTag()).getCheckBox();
-		if(box.isEnabled())
-			box.setChecked(!box.isChecked());
-
-	}
+//	@Override
+//	public void onItemClick(AdapterView<?> parent, View view, int position, long id)
+//	{
+//		CheckBox box = ((ViewHolder) view.getTag()).getCheckBox();
+//		if(box.isEnabled())
+//			box.setChecked(!box.isChecked());
+//
+//	}
 
 	@Override
 	public void onCheckedChanged(CompoundButton buttonView, boolean isChecked)

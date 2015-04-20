@@ -8,7 +8,7 @@
     <color name="menuTextColor">#ff2e2e2e</color>
     <color name="menu_splitLine">#ee0a7c8a</color>
 
-    <color name="btn_normal">#cb5ab1b9</color>
-    <color name="btn_press">#cb498a90</color>
-    <color name="btn_disable">#cb837e87</color>
+    <color name="btn_normal">#ee5ab1b9</color>
+    <color name="btn_press">#ee498a90</color>
+    <color name="btn_disable">#ee837e87</color>
 </resources>
