@@ -1,12 +1,14 @@
 package com.cfun.proxy;
 
 
+
 import android.content.*;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
@@ -27,9 +29,9 @@ import org.apache.commons.lang3.StringUtils;
 import java.io.*;
 import java.util.Properties;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener, NetworkStatuChangReciver.OnMobileNetworkStatuChangedListener
+public class MainActivity extends BaseActivity implements View.OnClickListener, NetworkStatuChangReciver.OnMobileNetworkStatuChangedListener, View.OnLongClickListener
 {
-
+	private static final int CHOSE_FILE = 1;
 	private PopupWindow popwindow;
 	private NetworkStatuChangReciver reciver;
 
@@ -71,11 +73,13 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
 		init();
 		initSpanner();
+		BackgroundUtil.setBackground(this);
 	}
 
 	private void init()
 	{
 		findViewById(android.R.id.content).setLongClickable(true);
+		findViewById(android.R.id.content).setOnLongClickListener(this);
 		btStart = (TextView) findViewById(R.id.tv_start);
 		btStop = (TextView) findViewById(R.id.tv_stop);
 		spinner = (Spinner)findViewById(R.id.spinner);
@@ -152,7 +156,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 			public void onItemSelected(AdapterView<?> parent, View view, int position, long id)
 			{
 				SharedPreferences.Editor editor = getSharedPreferences(GlobleConfig.app_PerferenceName, android.content.Context.MODE_PRIVATE).edit();
-				String name = (String)parent.getAdapter().getItem(position);
+				String name = (String) parent.getAdapter().getItem(position);
 				Properties properties = ModleHelper.constructPropertiesFromPropertiesFile(new File(GlobleConfig.configDir + "/" + name + GlobleConfig.suffix));
 				if (properties == null)
 				{
@@ -173,6 +177,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 			}
 		});
 	}
+
+
 
 	@Override
 	protected void onStart()
@@ -456,5 +462,44 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 		}
 	}
 
+
+	@Override
+	public boolean onLongClick(View v)
+	{
+		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+		intent.setType("image/*");
+		intent.addCategory(Intent.CATEGORY_OPENABLE);
+
+		try {
+			startActivityForResult( Intent.createChooser(intent, getString(R.string.choseFile)), CHOSE_FILE);
+		} catch (android.content.ActivityNotFoundException ex) {
+			Toast.makeText(this, R.string.noFileChoseTool,  Toast.LENGTH_SHORT).show();
+		}
+		return false;
+	}
+	@Override
+	protected void onActivityResult(int requestCode, int resultCode, Intent data)  {
+		switch (requestCode) {
+			case CHOSE_FILE:
+				if (resultCode == RESULT_OK) {
+					// Get the Uri of the selected file
+					Uri uri = data.getData();
+					String path = FileUtil.getPath(this, uri);
+					if(path.endsWith(".png") || path.endsWith(".jpg"))
+					{
+						SharedPreferences.Editor editor =getSharedPreferences(GlobleConfig.app_PerferenceName, MODE_PRIVATE).edit();
+						editor.putString("bg", path);
+						editor.commit();
+						BackgroundUtil.setBackground(this);
+					}
+					else
+					{
+						Toast.makeText(this, R.string.notImage, Toast.LENGTH_SHORT).show();
+					}
+				}
+				break;
+		}
+		super.onActivityResult(requestCode, resultCode, data);
+	}
 
 }

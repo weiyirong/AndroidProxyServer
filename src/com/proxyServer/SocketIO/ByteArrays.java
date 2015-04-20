@@ -22,6 +22,8 @@ public class ByteArrays
 	final public static byte[] Accept       =str2byte("Accept:");
 	final public static byte[] Content_Type =str2byte("Content-Type");
 	final public static byte[] X_Online_Host= str2byte("X-Online-Host");
+	final public static byte[] X_Online_Host_Full= str2byte("X-Online-Host: ");
+	final public static byte[] IP1000172= str2byte(" 10.0.0.172");
 
 
 	static byte[] str2byte(String str)

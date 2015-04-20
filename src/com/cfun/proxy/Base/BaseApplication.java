@@ -142,10 +142,14 @@ public class BaseApplication extends Application
 		public void uncaughtException(Thread thread, Throwable ex)
 		{
 			ex.printStackTrace();
-			saveErrorLogo(thread.getName(),ex);
+			saveErrorLogo(thread.getName(), ex);
 
-			AlarmManager mgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
-			mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 500, restartIntent); // 1秒钟后重启应用
+			if(!BuildConfig.DEBUG)
+			{
+				AlarmManager mgr = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+				mgr.set(AlarmManager.RTC, System.currentTimeMillis() + 500, restartIntent);
+			}
+
 
 			android.os.Process.killProcess(android.os.Process.myPid());
 		}

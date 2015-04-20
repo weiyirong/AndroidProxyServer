@@ -7,7 +7,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
               android:layout_width="match_parent"
               android:layout_height="match_parent"
-             android:background="@drawable/bg">
+             >
     <View android:layout_height="0dp" android:layout_width="match_parent" android:layout_alignParentTop="true" android:id="@+id/chenJinBar" android:visibility="gone"></View>
 
     <LinearLayout
@@ -22,17 +22,23 @@
                 android:textSize="20sp"
                   android:gravity="center" android:textColor="#ff292a2f"/>
     </LinearLayout>
-    <LinearLayout
+    <FrameLayout
             android:orientation="vertical"
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
+            android:layout_height="fill_parent"
             android:layout_below="@id/app_list_linerlayout_title">
+
+        <include layout="@layout/processbar" android:id="@+id/process"  android:layout_height="30dp" android:layout_width="30dp" android:layout_gravity="center"/>
+
         <ListView
                 android:id="@+id/listView_list_apps"
                 android:layout_marginLeft="10dp"
                 android:layout_marginTop="10dp"
-                android:layout_marginRight="10dp" android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-    </LinearLayout>
+                android:layout_marginRight="10dp"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:visibility="gone"
+                android:layout_gravity="right|center_vertical"/>
+    </FrameLayout>
 
 </RelativeLayout>

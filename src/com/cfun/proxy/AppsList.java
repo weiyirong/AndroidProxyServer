@@ -10,11 +10,11 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-//import android.util.Log;
 import android.view.*;
 import android.widget.*;
 import com.cfun.proxy.Base.BaseActivity;
 import com.cfun.proxy.Config.GlobleConfig;
+import com.cfun.proxy.util.BackgroundUtil;
 import com.cfun.proxy.util.ChenJinUtil;
 
 import java.text.Collator;
@@ -22,7 +22,6 @@ import java.util.*;
 
 public class AppsList extends BaseActivity implements AdapterView.OnItemClickListener, CompoundButton.OnCheckedChangeListener
 {
-	private PopupWindow popwindow;
 	private boolean isBanMian = false;
 	private boolean isBumian = false;
 	private static List<Map<String, Object>> allAppInfo;
@@ -32,7 +31,7 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 	@Override
 	public void finish()
 	{
-		super.finish();;
+		super.finish();
 		if(isBumian)
 			overridePendingTransition(R.anim.my_trans_right_in,R.anim.my_trans_left_out);
 		else
@@ -50,15 +49,13 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 		isBanMian =  "banmian".equals(getIntent().getStringExtra("mian"));
 		isBumian = !isBanMian;
 
-		View v = getLayoutInflater().inflate(R.layout.processbar,null);
-		popwindow = new PopupWindow(v, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true);
-		popwindow.setOutsideTouchable(false);
 
 		final Handler appInfoFinish = new Handler(){
 			@Override
 			public void handleMessage(Message msg)
 			{
-				super.handleMessage(msg);
+				findViewById(R.id.process).setVisibility(View.GONE);
+				findViewById(R.id.listView_list_apps).setVisibility(View.VISIBLE);
 				String mian;
 				String another;
 				if(isBumian)
@@ -100,17 +97,9 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 				ListView listView = ((ListView)findViewById(R.id.listView_list_apps));
 				listView.setAdapter(adapter);
 				listView.setOnItemClickListener(AppsList.this);
-				popwindow.dismiss();
 			}
 		};
-		final Handler showPopWindow = new Handler(){
-			@Override
-			public void handleMessage(Message msg)
-			{
-				super.handleMessage(msg);
-				popwindow.showAtLocation(findViewById(android.R.id.content), Gravity.CENTER|Gravity.CENTER,0,-20);
-			}
-		};
+
 		new Thread(new Runnable()
 		{
 			@Override
@@ -118,7 +107,6 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 			{
 				if(allAppInfo==null)
 				{
-					showPopWindow.sendEmptyMessageDelayed(0,50); //��ʾ�ȴ�popwindow
 					allAppInfo = getInstalledApps();
 					final Comparator cmp = Collator.getInstance(Locale.CHINA);
 					Collections.sort(allAppInfo,new Comparator<Map<String, Object>>()
@@ -139,6 +127,7 @@ public class AppsList extends BaseActivity implements AdapterView.OnItemClickLis
 		}).start();
 
 		gestureSwitch();
+		BackgroundUtil.setBackground(this);
 	}
 
 	private void gestureSwitch()

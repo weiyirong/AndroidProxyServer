@@ -5,7 +5,7 @@ package com.cfun.proxy.Config;
  */
 public class GlobleConfig
 {
-	public static final String suffix = ".prs";
+	public static final String suffix = ".ini";
 	public static String app_PerferenceName = null;
 	public static String configDir = null;
 }

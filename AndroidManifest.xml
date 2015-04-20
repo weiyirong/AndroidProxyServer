@@ -40,7 +40,6 @@
         <service
                 android:name="com.cfun.proxy.Service.ProxyService"
                 android:label="@string/service_name"
-                android:process=":proxyServer"
                 android:description="@string/serviceDescription">
          </service>
     </application>

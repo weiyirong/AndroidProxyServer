@@ -54,6 +54,8 @@ public class HttpFirstLine
 
 	public void parstHost(String H) throws UnsupportedEncodingException
 	{
+		if(H.startsWith("10.0.0.172"))
+			return;
 		int index = H.indexOf(':');
 		if(index>0)
 		{

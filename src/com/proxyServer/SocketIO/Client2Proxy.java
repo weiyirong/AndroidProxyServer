@@ -4,9 +4,11 @@ import java.io.*;
 import java.net.Socket;
 import java.net.UnknownHostException;
 
+import com.cfun.proxy.Base.BaseApplication;
 import com.cfun.proxy.Config.ModelConfig;
 //import com.foundationdb.tuple.ByteArrayUtil;
 //import com.foundationdb.tuple.ByteArrayUtil;
+import com.cfun.proxy.R;
 import com.cfun.proxy.util.ByteArrayUtil;
 import com.proxyServer.Exception.*;
 import com.proxyServer.HttpProxy.HttpConnection;
@@ -170,12 +172,48 @@ public class Client2Proxy
 //		boolean readEmptyLineFirst = false;
 		for(ByteArrayBuffer line= getToChar(':'); line.length() > 2; line= getToChar(':'))
 		{
+			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.X_Online_Host))
+			{
+				ByteArrayBuffer HP_Byte = getToChar('\n');//获取行的后半部分
+				if(ByteArrayUtil.startsWith(HP_Byte.buffer(), ByteArrays.IP1000172))
+					continue;
+				String HP = new String(HP_Byte.buffer(),1,HP_Byte.length()-3);
+				int index = HP.indexOf(":");
+				if(index>0)
+				{
+					hfl.Host = HP.substring(0,index);
+					hfl.Port = Integer.parseInt(HP.substring(index+1));
+					hfl.HP = HP.getBytes("iso8859-1");
+				}
+				else
+				{
+					hfl.Host = HP;
+					hfl.Port = 80;
+					hfl.HP   = HP.getBytes("iso8859-1");
+				}
+				ConnectToServer();
+				//HOST已经找到，此时可以直接向输入流中写入数据
+				{
+					//直接写入第一行数据进输出流
+					writeFirstLine();
+				}
+				if(!isContainStr(ByteArrays.X_Online_Host)) //要删除的头域中不包含X-Onlline-Host
+				{
+					//写入原Host
+					writToBF(ByteArrays.X_Online_Host_Full);//(Host:) 写前半部分
+					bf.append(HP_Byte.buffer(),0,HP_Byte.length());//写后半部分
+				}
+				//遇到了Host 就先把带有Host的信息写入，加快上级代理服务器识别地址速度
+				oStream.write(bf.buffer(),0,bf.length());
+				bf.setLength(0);
+				continue;
+			}
 			if(ByteArrayUtil.startsWith(line.buffer(), ByteArrays.Host))
 			{
-//				if(noHost) 一定无Host字段
-//				{
-					//尚未发现主机，现在刚发现，故要对远程主机进行连接，并且修改noHost
-					ByteArrayBuffer HP_Byte = getToChar('\n');//获取行的后半部分
+				//尚未发现主机，现在刚发现，故要对远程主机进行连接，并且修改noHost
+				ByteArrayBuffer HP_Byte = getToChar('\n');//获取行的后半部分
+				if(ByteArrayUtil.startsWith(HP_Byte.buffer(), ByteArrays.IP1000172))
+					continue;
 					String HP = new String(HP_Byte.buffer(),1,HP_Byte.length()-3);
 					int index = HP.indexOf(":");
 					if(index>0)
@@ -287,7 +325,7 @@ public class Client2Proxy
 		lineBF.setLength(0);
 		int l= iStream.read();
 		if(l < 0)
-			throw new IOException("客户端读取数据失败");
+			throw new IOException(BaseApplication.getInstance().getString(R.string.readError));
 		if(l=='\r')
 		{
 			iStream.read();//读一个\n

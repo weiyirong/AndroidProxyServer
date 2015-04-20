@@ -27,6 +27,7 @@
     <string name="serviceSucc">服务启动成功</string>
     <string name="serviceDescription">代理上网服务，用来代理其他软件连接互联网</string>
     <string name="meituan">美团</string>
+    <string name="readError">客户端数据读取失败</string>
 
     <string name="menu_set">设 置</string>
     <string name="menu_edit">编 辑</string>
@@ -36,6 +37,9 @@
     <string name="closeService">关 闭</string>
 
     <string name="waiting">加载中....</string>
+    <string name="choseFile">选择背景图片</string>
+    <string name="noFileChoseTool">没有有效的文件选择工具</string>
+    <string name="notImage">选择的不是有效的图片</string>
 
     <array name="qqPackageNames">
         <item>com.tencent.mobileqq</item>

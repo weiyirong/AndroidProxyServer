@@ -5,21 +5,46 @@ package com.cfun.proxy.util;
  */
 public class ByteArrayUtil
 {
-	public static boolean startsWith(byte[] b1, byte[] b2)
+	public static boolean startsWith(byte[] big, byte[] small)
 	{
-		if(b1==null && b2 == null)
+		if(big==null && small == null)
 			return true;
-		if(b1==null && b2 != null)
+		if(big==null && small != null)
 			return false;
-		if(b1 != null && b2 == null)
+		if(big != null && small == null)
 			return false;
-		if(b1.length < b2.length)
+		if(big.length < small.length)
 			return false;
-		for (int i=0; i<b2.length; i++)
+		for (int i=0; i<small.length; i++)
 		{
-			if(b1[i] != b2[i])
+			if(big[i] != small[i])
 				return false;
 		}
 		return true;
+	}
+
+	public static boolean contains(byte[] big, byte[] small)
+	{
+		if(big ==null || small == null)
+			return false;
+		if(big.length < small.length)
+			return false;
+		if(small.length == 0)
+			return true;
+
+		for(int i =0; i<=big.length-small.length; i++)
+		{
+			boolean contain =true;
+			for(int j =0; j<small.length; j++)
+			{
+				if(big[i+j] != small[j])
+				{
+					contain = false;
+					break;
+				}
+			}
+			if(contain) return contain;
+		}
+		return false;
 	}
 }

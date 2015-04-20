@@ -52,15 +52,15 @@ public class ProxyService extends Service
 	public int onStartCommand(Intent intent,int flags,int startId)
 	{
 //		super.onStartCommand(intent, flags, startId);
-		try
-		{
-			AppConfig.refresh(this);
-			ModelConfig.refresh(this);
-		} catch (UnsupportedEncodingException e)
-		{
-			Toast.makeText(this, R.string.configFileReadError, Toast.LENGTH_SHORT).show();
-			return Service.START_NOT_STICKY;
-		}
+//		try
+//		{
+//			AppConfig.refresh(this);
+//			ModelConfig.refresh(this);
+//		} catch (UnsupportedEncodingException e)
+//		{
+//			Toast.makeText(this, R.string.configFileReadError, Toast.LENGTH_SHORT).show();
+//			return Service.START_NOT_STICKY;
+//		}
 		try
 		{
 			AppConfig.refresh(this.getBaseContext());
