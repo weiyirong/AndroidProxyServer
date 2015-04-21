@@ -1,6 +1,7 @@
 .idea
 .settings
 bin
+gen
 proguard
 proguard_logs
 proxyServer.apk

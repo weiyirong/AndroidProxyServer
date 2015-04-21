@@ -42,6 +42,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 	private TextView btStart;
 	private TextView btStop;
 	private Spinner spinner = null;
+	private static Uri imageUri = Uri.parse("file://"+GlobleConfig.configDir+"/bg.jpg");
 	
 	private boolean isIllgle = false;
 	private final static String stopCmd =
@@ -468,10 +469,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 	@Override
 	public boolean onLongClick(View v)
 	{
+
 		View content = findViewById(android.R.id.content);
-		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+		Intent intent = new Intent(Intent.ACTION_GET_CONTENT, null);
 		intent.setType("image/*");
-		intent.addCategory(Intent.CATEGORY_OPENABLE);
 		intent.putExtra("crop", "true");
 		intent.putExtra("aspectX", content.getWidth());
 		intent.putExtra("aspectY", content.getHeight());
@@ -493,8 +494,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 		switch (requestCode) {
 			case CHOSE_FILE:
 				if (resultCode == RESULT_OK) {
-					// Get the Uri of the selected file
+//					 Get the Uri of the selected file
 					Uri uri = data.getData();
+					if(uri == null)
+						uri = imageUri;
 					String path = FileUtil.getPath(this, uri);
 					SharedPreferences.Editor editor =getSharedPreferences(GlobleConfig.app_PerferenceName, MODE_PRIVATE).edit();
 					if(path.endsWith(".png") || path.endsWith(".jpg"))
