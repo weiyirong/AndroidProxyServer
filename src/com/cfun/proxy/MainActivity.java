@@ -4,12 +4,14 @@ package com.cfun.proxy;
 
 import android.content.*;
 import android.content.pm.ActivityInfo;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
 import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.Html;
@@ -466,9 +468,18 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 	@Override
 	public boolean onLongClick(View v)
 	{
+		View content = findViewById(android.R.id.content);
 		Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
 		intent.setType("image/*");
 		intent.addCategory(Intent.CATEGORY_OPENABLE);
+		intent.putExtra("crop", "true");
+		intent.putExtra("aspectX", content.getWidth());
+		intent.putExtra("aspectY", content.getHeight());
+		intent.putExtra("scale", true);
+		intent.putExtra("return-data", false);
+		intent.putExtra(MediaStore.EXTRA_OUTPUT, imageUri);
+		intent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
+		intent.putExtra("noFaceDetection", true);;
 
 		try {
 			startActivityForResult( Intent.createChooser(intent, getString(R.string.choseFile)), CHOSE_FILE);
