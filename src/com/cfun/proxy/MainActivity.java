@@ -34,6 +34,7 @@ import java.util.Properties;
 public class MainActivity extends BaseActivity implements View.OnClickListener, NetworkStatuChangReciver.OnMobileNetworkStatuChangedListener, View.OnLongClickListener
 {
 	private static final int CHOSE_FILE = 1;
+	private static final int CHANGE_UID = 2;
 	private PopupWindow popwindow;
 	private NetworkStatuChangReciver reciver;
 
@@ -111,7 +112,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 				//半免
 				Intent intent = new Intent(MainActivity.this, AppsList.class);
 				intent.putExtra("mian", "banmian");
-				startActivity(intent);
+//				startActivity(intent);
+				startActivityForResult(intent, CHANGE_UID);
 				overridePendingTransition(R.anim.my_trans_right_in, R.anim.my_trans_left_out);
 				return false;
 			}
@@ -122,7 +124,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 				//不免
 				Intent intent = new Intent(MainActivity.this, AppsList.class);
 				intent.putExtra("mian", "bumian");
-				startActivity(intent);
+//				startActivity(intent);
+				startActivityForResult(intent, CHANGE_UID);
 				overridePendingTransition(R.anim.my_trans_left_in, R.anim.my_trans_right_out);
 				return false;
 			}
@@ -275,6 +278,14 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
 	public void onStartService(View v)
 	{
+		execStartCmd(false);
+		Intent intent = new Intent(getBaseContext(), ProxyService.class);
+		startService(intent);
+		(v).setEnabled(false);
+
+	}
+	protected void execStartCmd(boolean isRepeat)
+	{
 		try
 		{
 			AppConfig.refresh(this);
@@ -284,12 +295,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 			Toast.makeText(this, R.string.configFileReadError, Toast.LENGTH_SHORT).show();
 			return;
 		}
-		Intent intent = new Intent(getBaseContext(), ProxyService.class);
-//		Bundle bundle = new Bundle();
-//		bundle.putSerializable("config", new ModelConfig());
-//		intent.putExtras(bundle);
-		startService(intent);
-		(v).setEnabled(false);
 		String search[] = {"[banmian]", "[bumian]", "[gprs_interface]", "[shared_interface]", "[uid]", "[qquid]", "[isHttps]"};
 		String uid = String.valueOf(getApplication().getApplicationInfo().uid);
 		String bumian = AppConfig.bumian;
@@ -303,7 +308,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 		String cmd = StringUtils.replaceEach(getWall(), search, replace);
 		AppFileUtil.writeFile("ft.sh", cmd, false);
 		ShellResult result = LinuxShellUtil.execShell(AppFileUtil.getFullPath("ft.sh"));
-		Toast.makeText(this, result.getExitStatu() == 0 ? R.string.cmdFinish : R.string.cmdFail, Toast.LENGTH_SHORT).show();
+		if(isRepeat)
+			Toast.makeText(this, result.getExitStatu() == 0 ? R.string.fireWallUpdateSuccess : R.string.fireWallUpdateFailed, Toast.LENGTH_SHORT).show();
+		else
+			Toast.makeText(this, result.getExitStatu() == 0 ? R.string.cmdFinish : R.string.cmdFail, Toast.LENGTH_SHORT).show();
 	}
 
 	public void onStopService(View v)
@@ -513,6 +521,10 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 					BackgroundUtil.setBackground(this);
 				}
 				break;
+			case CHANGE_UID:
+				if(resultCode == RESULT_OK &&  AppHelper.isServiceRunning(ProxyService.class.getName()))
+					execStartCmd(true);
+
 		}
 		super.onActivityResult(requestCode, resultCode, data);
 	}

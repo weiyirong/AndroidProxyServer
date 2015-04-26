@@ -25,17 +25,22 @@ public class AppsList extends BaseActivity implements CompoundButton.OnCheckedCh
 	private boolean isBanMian = false;
 	private boolean isBumian = false;
 	private static List<Map<String, Object>> allAppInfo;
+	private static boolean isChanged = false;
 //	private static String TAG = "-----";
 
 	private AppAdapter adapter;
 	@Override
 	public void finish()
 	{
-		super.finish();
 		if(isBumian)
 			overridePendingTransition(R.anim.my_trans_right_in,R.anim.my_trans_left_out);
 		else
 			overridePendingTransition(R.anim.my_trans_left_in,R.anim.my_trans_right_out);
+		if(isChanged)
+			setResult(RESULT_OK);
+		else
+			setResult(RESULT_CANCELED);
+		super.finish();
 	}
 
 
@@ -240,6 +245,7 @@ public class AppsList extends BaseActivity implements CompoundButton.OnCheckedCh
 //				Log.d(TAG, "DELETE  MAIN :"+buttonView.getTag());
 				adapter.removeSelect((Integer)buttonView.getTag());
 			}
+		isChanged = true;
 	}
 
 	class AppAdapter extends BaseAdapter

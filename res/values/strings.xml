@@ -15,6 +15,10 @@
     <string name="about">Cfun制作 ^_^</string>
     <string name="cmdFinish">命令执行完毕</string>
     <string name="cmdFail">命令执行失败,请确定已取得并授权Root权限</string>
+
+    <string name="fireWallUpdateSuccess">防火墙规则更新成功</string>
+    <string name="fireWallUpdateFailed">防火墙规则更新失败</string>
+
     <string name="massageAreadyCopy">信息已复制，请发给作者</string>
     <string name="unKnow"> 未知</string>
     <string name="banMianChoses">不免选择</string>

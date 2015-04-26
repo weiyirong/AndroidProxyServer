@@ -36,6 +36,7 @@ echo "1"  > /proc/sys/net/ipv4/ip_forward
 
 iptables -t nat -F
 iptables -t mangle -F
+iptables -t nat -X $CName
 iptables -t nat -N $CName
 iptables -t nat -I OUTPUT -o $IF_NAME -j $CName
 
