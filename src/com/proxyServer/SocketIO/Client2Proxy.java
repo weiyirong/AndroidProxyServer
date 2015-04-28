@@ -310,9 +310,11 @@ public class Client2Proxy
 	protected void writeBody() throws IOException
 	{
 		int len = 1;
-		while(content_length > 0 && len >0)
+		while(content_length > 0)
 		{
 			len= iStream.read(buffer, 0, content_length);
+			if(len<=0)
+				break;
 			content_length-= len;
 			oStream.write(buffer,0,len);
 			oStream.flush();
